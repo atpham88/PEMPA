@@ -3,7 +3,7 @@ DCOPF model of the PJM power system, designed to explore state/federal policy in
 
 Model has full coverage of all existing generation units, calibrated to match year 2016 and allows new NGCC,  wind, and solar capacity expansion starting in 2017.
 
-Model has five load zones agregated from over 20 load zones in PJM, but units and policies can be modelled at system, state, or state-approximate level. Links based upon transmission lines observed  between  zones.
+Model has five load zones aggregated from over 20 load zones in PJM, but units and policies can be modelled at system, state, or state-approximate level. Links based upon transmission lines observed  between  zones.
 
 Model considers 96 load segments  for each load zone  (24 per season), to capture temporal variation in demand.  Demand  is elastic (-0.05).
 
