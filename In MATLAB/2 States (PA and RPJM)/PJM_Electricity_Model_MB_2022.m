@@ -58,55 +58,6 @@ elseif ext_rec_sc ==2
    rec_RPJM_g_sc = 0.814*1.08*1.0589;
 end
 	  	  	  	
-% Adjusted variable operation and maintenance costs:
-vom_wind = 3.38;
-vom_hydro = 3.5;
-vom_solar = 5.4;
-vom_nuclear = 4.28;
-
-vom_bio_PA = 17.0;
-vom_bio_RPJM = 3.5;
-
-vom_gas_PA_winter = 22;
-vom_gas_RPJM_winter = 14.5;
-vom_gas_PA_spring = 7.3;
-vom_gas_RPJM_spring = 5.2;
-vom_gas_PA_summer = 14.8;
-vom_gas_RPJM_summer = 12.2;
-vom_gas_PA_fall = 16.3;
-vom_gas_RPJM_fall = 13.8;
-
-vom_oil_PA = 1.8;
-vom_oil_RPJM = 0.2;
-
-vom_coal_PA_winter = 1.25;
-vom_coal_RPJM_winter = 1.25;
-vom_coal_PA_spring = 1.25;
-vom_coal_RPJM_spring = 1.25;
-vom_coal_PA_summer = 1.25;
-vom_coal_RPJM_summer = 1.25;
-vom_coal_PA_fall = 1.25;
-vom_coal_RPJM_fall = 1.25;
-
-f_cs_bio = 1.25;
-
-f_cs_coal_winter = 1.45;
-f_cs_gas_winter = 0.83;
-f_cs_oil_winter = 0.61;
-
-f_cs_coal_spring = 1.45;
-f_cs_gas_spring = 0.75;
-f_cs_oil_spring = 0.8;
-
-f_cs_coal_summer = 1.45;
-f_cs_gas_summer = 0.83;
-f_cs_oil_summer = 0.61;
-
-f_cs_coal_fall = 1.45;
-f_cs_gas_fall = 0.83;
-f_cs_oil_fall = 0.61;
-
-
 % RPS data:
 if rps_const == 1
    re_1_tier_1 = 0.20;                                % RPS standard for DC - tier 1
@@ -118,15 +69,15 @@ if rps_const == 1
    re_3_tier_1 = 0.19;                                % RPS standard for IL
    re_3_tier_2 = 0;                                   % RPS standard for IL
 
-   re_4_tier_1 = 0.07;                                 % RPS standard for IN
+   re_4_tier_1 = 0.07;                                % RPS standard for IN
    re_4_tier_2 = 0;                                   % RPS standard for IN
 
    re_5_no_tier = 0;                                  % RPS standard for KY
 
    re_6_tier_1 = 0.25;                                % RPS standard for MD tier 1
-   re_6_tier_2 = 0;                               % RPS standard for MD tier 2
+   re_6_tier_2 = 0;                               	  % RPS standard for MD tier 2
 
-   re_7_tier_1 = 0.150;                                % RPS standard for MI
+   re_7_tier_1 = 0.150;                               % RPS standard for MI
    re_7_tier_2 = 0;                                   % RPS standard for MI
 
    re_8_tier_1 = 0.125;                               % RPS standard for NC
@@ -135,7 +86,7 @@ if rps_const == 1
 if gr_path_nj==1
    re_9_tier_1 = 0.245;
 else
-   re_9_tier_1 = 0.210;                            % RPS standard for NJ tier 1
+   re_9_tier_1 = 0.210;                               % RPS standard for NJ tier 1
 end
 
    re_9_tier_2 = 0.025;                               % RPS standard for NJ tier 2
@@ -143,7 +94,7 @@ end
    re_10_tier_1 = 0.085;                              % RPS standard for OH
    re_10_tier_2 = 0;                                  % RPS standard for OH
 
-   re_11_tier_1 = 0.080;                               % RPS standard for PA tier 1
+   re_11_tier_1 = 0.080;                              % RPS standard for PA tier 1
    re_11_tier_2 = 0.10;                               % RPS standard for PA tier 2
 
    re_12_no_tier = 0;                                 % RPS standard for TN
@@ -151,15 +102,15 @@ end
    re_14_no_tier = 0;                                 % RPS standard for WV
 
    % SREC:
-   se_1 = 0.0218;                                      % solar standard for DC
-   se_2 = 0.0275;                                      % solar standard for DE
-   se_3 = 0.0114;                                      % solar standard for IL
+   se_1 = 0.0218;                                     % solar standard for DC
+   se_2 = 0.0275;                                     % solar standard for DE
+   se_3 = 0.0114;                                     % solar standard for IL
    se_4 = 0;                                          % solar standard for IN
    se_5 = 0;                                          % solar standard for KY
    se_6 = 0.025;                                      % solar standard for MD
    se_7 = 0;                                          % solar standard for MI
-   se_8 = 0.0020;                                      % solar standard for NC
-   se_9 = 0.051;                                     % solar standard for NJ
+   se_8 = 0.0020;                                     % solar standard for NC
+   se_9 = 0.051;                                      % solar standard for NJ
    se_10 = 0.0034;                                    % solar standard for OH
    se_11 = 0.0050;                                    % solar standard for PA
    se_12 = 0;                                         % solar standard for TN
@@ -246,7 +197,6 @@ x_gen_solar = [x_gen_solar_DC;x_gen_solar_DE;x_gen_solar_IL;x_gen_solar_IN;x_gen
 x_gen = [x_gen_tot,x_gen_tier1,x_gen_tier2,x_gen_solar];
 
 %% Read Data:
-
 % Read Transmission Network Data:
 transmission_network = '/storage/work/a/akp5369/Model_in_Matlab/Input Data/Transmission Networks.xlsx';
 transmission_data = xlsread(transmission_network,'Transmission Network');
@@ -355,7 +305,6 @@ end
 no_trans = zeros(1,96);
 trans_factor = [trans_factor_data(1,:);trans_factor_data(2,:);trans_factor_data(3,:);no_trans;no_trans;no_trans;trans_factor_data(4,:);no_trans;no_trans;trans_factor_data(5,:)];
 
-
 % Region 1: PA East
 % Region 2: PA West
 % Region 3: RPJM East
@@ -435,591 +384,6 @@ marginal_cost_3 = supply_data_3(:,5:100);
 marginal_cost_4 = supply_data_4(:,5:100);
 marginal_cost_5 = supply_data_5(:,5:100);
 marginal_cost_t = [marginal_cost_1;marginal_cost_2;marginal_cost_3;marginal_cost_4;marginal_cost_5];
-
-% Wind MC:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==8
-        marginal_cost_1(i,:) = marginal_cost_1(i,:) + vom_wind;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==8
-        marginal_cost_2(i,:) = marginal_cost_2(i,:) + vom_wind;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==8
-        marginal_cost_3(i,:) = marginal_cost_3(i,:) + vom_wind;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==8
-        marginal_cost_4(i,:) = marginal_cost_4(i,:) + vom_wind;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==2 
-        marginal_cost_5(i,:) = marginal_cost_5(i,:) + vom_wind;
-    end
-end
-
-
-% Solar MC:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==7
-        marginal_cost_1(i,:) = marginal_cost_1(i,:) + vom_solar;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==7
-        marginal_cost_2(i,:) = marginal_cost_2(i,:) + vom_solar;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==7
-        marginal_cost_3(i,:) = marginal_cost_3(i,:) + vom_solar;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==7
-        marginal_cost_4(i,:) = marginal_cost_4(i,:) + vom_solar;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==7
-        marginal_cost_5(i,:) = marginal_cost_5(i,:) + vom_solar;
-    end
-end
-
-% Hydro MC:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==3
-        marginal_cost_1(i,:) = marginal_cost_1(i,:) + vom_hydro;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==3
-        marginal_cost_2(i,:) = marginal_cost_2(i,:) + vom_hydro;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==3
-        marginal_cost_3(i,:) = marginal_cost_3(i,:) + vom_hydro;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==3
-        marginal_cost_4(i,:) = marginal_cost_4(i,:) + vom_hydro;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==3
-        marginal_cost_5(i,:) = marginal_cost_5(i,:) + vom_hydro;
-    end
-end
-
-
-% Nuclear MC:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==4
-        marginal_cost_1(i,:) = marginal_cost_1(i,:)*(1+nuclear_gr) + vom_nuclear;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==4
-        marginal_cost_2(i,:) = marginal_cost_2(i,:)*(1+nuclear_gr) + vom_nuclear;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==4 && state_3(i)==3
-        marginal_cost_3(i,:) = marginal_cost_3(i,:)*(1+nuclear_gr) + vom_nuclear - 16.5;
-    elseif fuel_region_3(i)==4 && state_3(i)==9
-        marginal_cost_3(i,:) = marginal_cost_3(i,:)*(1+nuclear_gr) + vom_nuclear - 10.012;
-    elseif fuel_region_3(i)==4 && state_3(i)~=9 && state_3(i)~=3
-        marginal_cost_3(i,:) = marginal_cost_3(i,:)*(1+nuclear_gr) + vom_nuclear;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==4 && state_4(i)==3
-        marginal_cost_4(i,:) = marginal_cost_4(i,:)*(1+nuclear_gr) + vom_nuclear - 16.5;
-    elseif fuel_region_4(i)==4 && state_4(i)==9
-        marginal_cost_4(i,:) = marginal_cost_4(i,:)*(1+nuclear_gr) + vom_nuclear - 10.012;
-    elseif fuel_region_4(i)==4 && state_4(i)~=9 && state_4(i)~=3
-        marginal_cost_4(i,:) = marginal_cost_4(i,:)*(1+nuclear_gr) + vom_nuclear;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==4 && state_5(i)==3
-        marginal_cost_5(i,:) = marginal_cost_5(i,:)*(1+nuclear_gr) + vom_nuclear - 16.5;
-    elseif fuel_region_5(i)==4 && state_5(i)==9
-        marginal_cost_5(i,:) = marginal_cost_5(i,:)*(1+nuclear_gr) + vom_nuclear - 10.012;
-    elseif fuel_region_5(i)==4 && state_5(i)~=9 && state_5(i)~=3
-        marginal_cost_5(i,:) = marginal_cost_5(i,:)*(1+nuclear_gr) + vom_nuclear;
-    end
-end
-
-% Bio MC:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==1
-        marginal_cost_1(i,:) = marginal_cost_1(i,:)*f_cs_bio*(1+bio_gr)  + vom_bio_PA;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==1
-        marginal_cost_2(i,:) = marginal_cost_2(i,:)*f_cs_bio*(1+bio_gr) + vom_bio_PA;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==1
-        marginal_cost_3(i,:) = marginal_cost_3(i,:)*f_cs_bio*(1+bio_gr) + vom_bio_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==1
-        marginal_cost_4(i,:) = marginal_cost_4(i,:)*f_cs_bio*(1+bio_gr) + vom_bio_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==1
-        marginal_cost_5(i,:) = marginal_cost_5(i,:)*f_cs_bio*(1+bio_gr) + vom_bio_RPJM;
-    end
-end
-
-%%%%%%% Seasonal Differences in prices
-% Gas MC:
-% Winter -Gas:
-for i = 1:length(fuel_region_1)
-    if no_bin_1(i) <2022
-        if fuel_region_1(i)==9
-            marginal_cost_1(i,1:24) = marginal_cost_1(i,1:24).*f_cs_gas_winter.*(1+gas_gr_1(i,1:24)) + vom_gas_PA_winter;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if no_bin_2(i) <2022
-        if fuel_region_2(i)==9
-            marginal_cost_2(i,1:24) = marginal_cost_2(i,1:24).*f_cs_gas_winter.*(1+gas_gr_2(i,1:24)) + vom_gas_PA_winter;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if no_bin_3(i) <2022
-        if fuel_region_3(i)==9
-            marginal_cost_3(i,1:24) = marginal_cost_3(i,1:24).*f_cs_gas_winter.*(1+gas_gr_3(i,1:24)) + vom_gas_RPJM_winter;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if no_bin_4(i) <2022
-        if fuel_region_4(i)==9
-            marginal_cost_4(i,1:24) = marginal_cost_4(i,1:24).*f_cs_gas_winter.*(1+gas_gr_4(i,1:24)) + vom_gas_RPJM_winter;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if no_bin_5(i) <2022
-        if fuel_region_5(i)==9
-            marginal_cost_5(i,25:48) = marginal_cost_5(i,25:48).*f_cs_gas_winter.*(1+gas_gr_5(i,1:24)) + vom_gas_RPJM_winter;
-        end
-    end
-end
-
-% Spring - Gas:
-for i = 1:length(fuel_region_1)
-    if no_bin_1(i) <2022
-        if fuel_region_1(i)==9
-            marginal_cost_1(i,25:48) = marginal_cost_1(i,25:48).*f_cs_gas_spring.*(1+gas_gr_1(i,25:48)) + vom_gas_PA_spring;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if no_bin_2(i) <2022
-        if fuel_region_2(i)==9
-            marginal_cost_2(i,25:48) = marginal_cost_2(i,25:48).*f_cs_gas_spring.*(1+gas_gr_2(i,25:48)) + vom_gas_PA_spring;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if no_bin_3(i) <2022
-        if fuel_region_3(i)==9
-            marginal_cost_3(i,25:48) = marginal_cost_3(i,25:48).*f_cs_gas_spring.*(1+gas_gr_3(i,25:48)) + vom_gas_RPJM_spring;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if no_bin_4(i) <2022
-        if fuel_region_4(i)==9
-            marginal_cost_4(i,25:48) = marginal_cost_4(i,25:48).*f_cs_gas_spring.*(1+gas_gr_4(i,25:48)) + vom_gas_RPJM_spring;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if no_bin_5(i) <2022
-        if fuel_region_5(i)==9
-           marginal_cost_5(i,25:48) = marginal_cost_5(i,25:48).*f_cs_gas_spring.*(1+gas_gr_5(i,25:48)) + vom_gas_RPJM_spring;
-        end
-    end
-end
-
-% Summer - Gas:
-for i = 1:length(fuel_region_1)
-    if no_bin_1(i) <2022
-        if fuel_region_1(i)==9
-            marginal_cost_1(i,49:72) = marginal_cost_1(i,49:72).*f_cs_gas_summer.*(1+gas_gr_1(i,49:72)) + vom_gas_PA_summer;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if no_bin_2(i) <2022
-        if fuel_region_2(i)==9
-            marginal_cost_2(i,49:72) = marginal_cost_2(i,49:72).*f_cs_gas_summer.*(1+gas_gr_2(i,49:72)) + vom_gas_PA_summer;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if no_bin_3(i) <2022
-        if fuel_region_3(i)==9
-            marginal_cost_3(i,49:72) = marginal_cost_3(i,49:72).*f_cs_gas_summer.*(1+gas_gr_3(i,49:72)) + vom_gas_RPJM_summer;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if no_bin_4(i) <2022
-        if fuel_region_4(i)==9
-            marginal_cost_4(i,49:72) = marginal_cost_4(i,49:72).*f_cs_gas_summer.*(1+gas_gr_4(i,49:72)) + vom_gas_RPJM_summer;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if no_bin_5(i) <2022
-        if fuel_region_5(i)==9
-            marginal_cost_5(i,49:72) = marginal_cost_5(i,49:72).*f_cs_gas_summer.*(1+gas_gr_5(i,49:72)) + vom_gas_RPJM_summer;
-        end
-    end
-end
-
-% Fall - Gas:
-for i = 1:length(fuel_region_1)
-    if no_bin_1(i) <2022
-        if fuel_region_1(i)==9
-            marginal_cost_1(i,73:96) = marginal_cost_1(i,73:96).*f_cs_gas_fall.*(1+gas_gr_1(i,73:96)) + vom_gas_PA_fall;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if no_bin_2(i) <2022
-        if fuel_region_2(i)==9
-            marginal_cost_2(i,73:96) = marginal_cost_2(i,73:96).*f_cs_gas_fall.*(1+gas_gr_2(i,73:96)) + vom_gas_PA_fall;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if no_bin_3(i) <2022
-        if fuel_region_3(i)==9
-            marginal_cost_3(i,73:96) = marginal_cost_3(i,73:96).*f_cs_gas_fall.*(1+gas_gr_3(i,73:96)) + vom_gas_RPJM_fall;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if no_bin_4(i) <2022
-        if fuel_region_4(i)==9
-            marginal_cost_4(i,73:96) = marginal_cost_4(i,73:96).*f_cs_gas_fall.*(1+gas_gr_4(i,73:96)) + vom_gas_RPJM_fall;
-        end
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if no_bin_5(i) <2022
-        if fuel_region_5(i)==9
-            marginal_cost_5(i,73:96) = marginal_cost_5(i,73:96).*f_cs_gas_fall.*(1+gas_gr_5(i,73:96)) + vom_gas_RPJM_fall;
-        end
-    end
-end
-
-% Oil MC:
-% Winter - Oil:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==6
-        marginal_cost_1(i,1:24) = marginal_cost_1(i,1:24)*f_cs_oil_winter*(1+oil_gr) + vom_oil_PA;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==6
-        marginal_cost_2(i,1:24) = marginal_cost_2(i,1:24)*f_cs_oil_winter*(1+oil_gr) + vom_oil_PA;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==6
-        marginal_cost_3(i,1:24) = marginal_cost_3(i,1:24)*f_cs_oil_winter*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==6
-        marginal_cost_4(i,1:24) = marginal_cost_4(i,1:24)*f_cs_oil_winter*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==6
-        marginal_cost_5(i,25:48) = marginal_cost_5(i,25:48)*f_cs_oil_winter*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-% Spring - Oil:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==6
-        marginal_cost_1(i,25:48) = marginal_cost_1(i,25:48)*f_cs_oil_spring*(1+oil_gr) + vom_oil_PA;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==6
-        marginal_cost_2(i,25:48) = marginal_cost_2(i,25:48)*f_cs_oil_spring*(1+oil_gr) + vom_oil_PA;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==6
-        marginal_cost_3(i,25:48) = marginal_cost_3(i,25:48)*f_cs_oil_spring*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==6
-        marginal_cost_4(i,25:48) = marginal_cost_4(i,25:48)*f_cs_oil_spring*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==6
-        marginal_cost_5(i,25:48) = marginal_cost_5(i,25:48)*f_cs_oil_spring*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-% Summer - Oil:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==6
-        marginal_cost_1(i,49:72) = marginal_cost_1(i,49:72)*f_cs_oil_summer*(1+oil_gr) + vom_oil_PA;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==6
-        marginal_cost_2(i,49:72) = marginal_cost_2(i,49:72)*f_cs_oil_summer*(1+oil_gr) + vom_oil_PA;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==6
-        marginal_cost_3(i,49:72) = marginal_cost_3(i,49:72)*f_cs_oil_summer*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==6
-        marginal_cost_4(i,49:72) = marginal_cost_4(i,49:72)*f_cs_oil_summer*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==6
-        marginal_cost_5(i,49:72) = marginal_cost_5(i,49:72)*f_cs_oil_summer*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-% Fall - Oil:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==6
-        marginal_cost_1(i,73:96) = marginal_cost_1(i,73:96)*f_cs_oil_fall*(1+oil_gr) + vom_oil_PA;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==6
-        marginal_cost_2(i,73:96) = marginal_cost_2(i,73:96)*f_cs_oil_fall*(1+oil_gr) + vom_oil_PA;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==6
-        marginal_cost_3(i,73:96) = marginal_cost_3(i,73:96)*f_cs_oil_fall*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==6
-        marginal_cost_4(i,73:96) = marginal_cost_4(i,73:96)*f_cs_oil_fall*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==6
-        marginal_cost_5(i,73:96) = marginal_cost_5(i,73:96)*f_cs_oil_fall*(1+oil_gr) + vom_oil_RPJM;
-    end
-end
-
-% Coal MC:
-% Winter -Coal:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==2
-        marginal_cost_1(i,1:24) = marginal_cost_1(i,1:24)*f_cs_coal_winter*(1+coal_gr) + vom_coal_PA_winter;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==2
-        marginal_cost_2(i,1:24) = marginal_cost_2(i,1:24)*f_cs_coal_winter*(1+coal_gr) + vom_coal_PA_winter;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==2
-        marginal_cost_3(i,1:24) = marginal_cost_3(i,1:24)*f_cs_coal_winter*(1+coal_gr) + vom_coal_RPJM_winter;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==2
-        marginal_cost_4(i,1:24) = marginal_cost_4(i,1:24)*f_cs_coal_winter*(1+coal_gr) + vom_coal_RPJM_winter;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==2
-        marginal_cost_5(i,25:48) = marginal_cost_5(i,25:48)*f_cs_coal_winter*(1+coal_gr) + vom_coal_RPJM_winter;
-    end
-end
-
-% Spring - Coal:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==2
-        marginal_cost_1(i,25:48) = marginal_cost_1(i,25:48)*f_cs_coal_spring*(1+coal_gr) + vom_coal_PA_spring;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==2
-        marginal_cost_2(i,25:48) = marginal_cost_2(i,25:48)*f_cs_coal_spring*(1+coal_gr) + vom_coal_PA_spring;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==2
-        marginal_cost_3(i,25:48) = marginal_cost_3(i,25:48)*f_cs_coal_spring*(1+coal_gr) + vom_coal_RPJM_spring;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==2
-        marginal_cost_4(i,25:48) = marginal_cost_4(i,25:48)*f_cs_coal_spring*(1+coal_gr) + vom_coal_RPJM_spring;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==2
-        marginal_cost_5(i,25:48) = marginal_cost_5(i,25:48)*f_cs_coal_spring*(1+coal_gr) + vom_coal_RPJM_spring;
-    end
-end
-
-% Summer - Coal:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==2
-        marginal_cost_1(i,49:72) = marginal_cost_1(i,49:72)*f_cs_coal_summer*(1+coal_gr) + vom_coal_PA_summer;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==2
-        marginal_cost_2(i,49:72) = marginal_cost_2(i,49:72)*f_cs_coal_summer*(1+coal_gr) + vom_coal_PA_summer;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==2
-        marginal_cost_3(i,49:72) = marginal_cost_3(i,49:72)*f_cs_coal_summer*(1+coal_gr) + vom_coal_RPJM_summer;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==2
-        marginal_cost_4(i,49:72) = marginal_cost_4(i,49:72)*f_cs_coal_summer*(1+coal_gr) + vom_coal_RPJM_summer;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==2
-        marginal_cost_5(i,49:72) = marginal_cost_5(i,49:72)*f_cs_coal_summer*(1+coal_gr) + vom_coal_RPJM_summer;
-    end
-end
-
-% Fall - Coal:
-for i = 1:length(fuel_region_1)
-    if fuel_region_1(i)==2
-        marginal_cost_1(i,73:96) = marginal_cost_1(i,73:96)*f_cs_coal_fall*(1+coal_gr) + vom_coal_PA_fall;
-    end
-end
-
-for i = 1:length(fuel_region_2)
-    if fuel_region_2(i)==2
-        marginal_cost_2(i,73:96) = marginal_cost_2(i,73:96)*f_cs_coal_fall*(1+coal_gr) + vom_coal_PA_fall;
-    end
-end
-
-for i = 1:length(fuel_region_3)
-    if fuel_region_3(i)==2
-        marginal_cost_3(i,73:96) = marginal_cost_3(i,73:96)*f_cs_coal_fall*(1+coal_gr) + vom_coal_RPJM_fall;
-    end
-end
-
-for i = 1:length(fuel_region_4)
-    if fuel_region_4(i)==2
-        marginal_cost_4(i,73:96) = marginal_cost_4(i,73:96)*f_cs_coal_fall*(1+coal_gr) + vom_coal_RPJM_fall;
-    end
-end
-
-for i = 1:length(fuel_region_5)
-    if fuel_region_5(i)==2
-        marginal_cost_5(i,73:96) = marginal_cost_5(i,73:96)*f_cs_coal_fall*(1+coal_gr) + vom_coal_RPJM_fall;
-    end
-end
 
 % Demand parameters virtual bid percentage:
 z = zdata(:,5)/100;
