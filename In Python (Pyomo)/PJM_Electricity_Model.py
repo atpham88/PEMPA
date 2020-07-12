@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 from pyomo.environ import *
 
-model = ConcreteModel(name="(PJM_2021")
+model = ConcreteModel(name="PJM_2021")
 
 # Switches:
 # **********************************************
