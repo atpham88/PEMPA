@@ -29,22 +29,22 @@ cap_exp = 1      # Whether or not there's capacity expansion (==1:yes, ==0:no)
 I = 5                    # Number of nodes
 J = 884                  # Number of aggregated units
 T = 96                   # Number of load segments
-F = 10                   # Number of aggregated transmission lines
+F = 5                    # Number of aggregated transmission lines
 J_r = 262                # Number of plants eligible to provide RECs to PJM states.
 S = 14                   # Number of PJM states.
 etaD = 0.05              # Assumed elasticity of demand
 # etaD = 0.000001;              # Assumed elasticity of demand
 tot_loss_pct = 0.03412764857  # Assume transmission lost % in the distribution system.
-state_to_region_t = np.array([[0,0,0,0,0,0,0,0,0,0,0.586434045,0,0,0],
-                           [0,0,0,0,0,0,0,0,0,0,0.413565955,0,0,0],
-                           [0,1,0,0,0,0,0,0,0.228034644,0,0,0,0,0],
-                           [1,0,0,0,0,0.912229612,0,1,0,0,0,0,0.800495305,0.004136931],
-                           [0,0,1,1,1,0.087770388,1,0,0.771965356,1,0,1,0.199504695,0.995863069]])
+state_to_region_t = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.586434045, 0, 0, 0],
+                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.413565955, 0, 0, 0],
+                              [0, 1, 0, 0, 0, 0, 0, 0, 0.228034644, 0, 0, 0, 0, 0],
+                              [1, 0, 0, 0, 0, 0.912229612, 0, 1, 0, 0, 0, 0, 0.800495305, 0.004136931],
+                              [0, 0, 1, 1, 1, 0.087770388, 1, 0, 0.771965356, 1, 0, 1, 0.199504695, 0.995863069]])
 
 state_to_region = np.zeros([I, S*3])
 count = 0
 for s in range(S):
-    state_to_region[:, count: count+3] = np.tile(np.vstack(state_to_region_t[:, s]),(1,3))
+    state_to_region[:, count: count+3] = np.tile(np.vstack(state_to_region_t[:, s]), (1, 3))
     count = count+3
 
 gas_gr_data_2021 = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Gas price growth rates/gas_gr_2021.xlsx'
@@ -64,17 +64,29 @@ cf_gr_solar = 0.12
 cf_gr_nuclear = 0.029
 
 # Capacity Expansion Parameters:
-C_N_PA = np.hstack((70000, 165500 * (1 - 0.0170) ** 3, 135000 * (1 - 0.0219) ** 3))
-C_N_RPJM = np.hstack((73900, 165500 * (1 - 0.0170) ** 3, 130000 * (1 - 0.0219) ** 3))
-C_N = np.hstack((C_N_RPJM, C_N_RPJM, C_N_RPJM, C_N_RPJM, C_N_RPJM, C_N_RPJM, C_N_RPJM, C_N_RPJM,
-                 C_N_RPJM, C_N_RPJM, C_N_PA, C_N_RPJM, C_N_RPJM, C_N_RPJM))
+C_N_PA_g = 70000
+C_N_PA_w = 165500*(1-0.0170)**3
+C_N_PA_s = 135000*(1-0.0219) **3
+C_N_RPJM_g = 73900
+C_N_RPJM_w = 165500*(1-0.0170)**3
+C_N_RPJM_s = 130000*(1-0.0219)**3
+
+C_N_g = np.vstack((C_N_RPJM_g, C_N_RPJM_g, C_N_RPJM_g, C_N_RPJM_g, C_N_RPJM_g, C_N_RPJM_g, C_N_RPJM_g, C_N_RPJM_g,
+                 C_N_RPJM_g, C_N_RPJM_g, C_N_PA_g, C_N_RPJM_g, C_N_RPJM_g, C_N_RPJM_g))
+
+C_N_w = np.vstack((C_N_RPJM_w, C_N_RPJM_w, C_N_RPJM_w, C_N_RPJM_w, C_N_RPJM_w, C_N_RPJM_w, C_N_RPJM_w, C_N_RPJM_w,
+                 C_N_RPJM_w, C_N_RPJM_w, C_N_PA_w, C_N_RPJM_w, C_N_RPJM_w, C_N_RPJM_w))
+
+C_N_s = np.vstack((C_N_RPJM_s, C_N_RPJM_s, C_N_RPJM_s, C_N_RPJM_s, C_N_RPJM_s, C_N_RPJM_s, C_N_RPJM_s, C_N_RPJM_s,
+                 C_N_RPJM_s, C_N_RPJM_s, C_N_PA_s, C_N_RPJM_s, C_N_RPJM_s, C_N_RPJM_s))
 
 # Capacity factor of new units:
 avail_g = 0.961
 avail_w = 0.295
 avail_s = 0.17
-avail_N = np.hstack((avail_g, avail_w, avail_s))
-avail_N_all = np.repeat(avail_N, S)
+avail_N_g = np.repeat(avail_g , S)
+avail_N_w = np.repeat(avail_w , S)
+avail_N_s = np.repeat(avail_s , S)
 
 # Percentage of total ext REC supply available to use by state:
 rec_PA_g_sc = 0.615 * 1.4859
@@ -129,64 +141,75 @@ f_cs_gas_fall = 0.83
 f_cs_oil_fall = 0.61
 
 # Marginal cost:
-MC_N_PA = np.hstack((21.1 * (1 + 0.1194), 0, 0))
-MC_N_RPJM = np.hstack((24.2 * (1 + 0.1194), 0, 0))
+MC_N_PA_g = 21.1 * (1 + 0.1194)
+MC_N_PA_w = 0
+MC_N_PA_s = 0
 
-MC_N = np.hstack((MC_N_RPJM, MC_N_RPJM, MC_N_RPJM, MC_N_RPJM, MC_N_RPJM, MC_N_RPJM, MC_N_RPJM,
-                  MC_N_RPJM, MC_N_RPJM, MC_N_RPJM, MC_N_PA, MC_N_RPJM, MC_N_RPJM, MC_N_RPJM))
+MC_N_RPJM_g = 24.2 * (1+0.1194)
+MC_N_RPJM_w = 0
+MC_N_RPJM_s = 0
+
+MC_N_g = np.vstack((MC_N_RPJM_g, MC_N_RPJM_g, MC_N_RPJM_g, MC_N_RPJM_g, MC_N_RPJM_g, MC_N_RPJM_g, MC_N_RPJM_g,
+                  MC_N_RPJM_g, MC_N_RPJM_g, MC_N_RPJM_g, MC_N_PA_g, MC_N_RPJM_g, MC_N_RPJM_g, MC_N_RPJM_g))
+
+MC_N_w = np.vstack((MC_N_RPJM_w, MC_N_RPJM_w, MC_N_RPJM_w, MC_N_RPJM_w, MC_N_RPJM_w, MC_N_RPJM_w, MC_N_RPJM_w,
+                  MC_N_RPJM_w, MC_N_RPJM_w, MC_N_RPJM_w, MC_N_PA_w, MC_N_RPJM_w, MC_N_RPJM_w, MC_N_RPJM_w))
+
+MC_N_s = np.vstack((MC_N_RPJM_s, MC_N_RPJM_s, MC_N_RPJM_s, MC_N_RPJM_s, MC_N_RPJM_s, MC_N_RPJM_s, MC_N_RPJM_s,
+                  MC_N_RPJM_s, MC_N_RPJM_s, MC_N_RPJM_s, MC_N_PA_s, MC_N_RPJM_s, MC_N_RPJM_s, MC_N_RPJM_s))
 
 # RPS data:
-re_1_tier_1 = 0.20  # RPS standard for DC - tier 1
-re_1_tier_2 = 0  # RPS standard for DC - tier 2
+re_1_tier_1 = 0.20              # RPS standard for DC - tier 1
+re_1_tier_2 = 0                 # RPS standard for DC - tier 2
 
-re_2_tier_1 = 0.21  # RPS standard for DE
-re_2_tier_2 = 0  # RPS standard for DE
+re_2_tier_1 = 0.21              # RPS standard for DE
+re_2_tier_2 = 0                 # RPS standard for DE
 
-re_3_tier_1 = 0.175  # RPS standard for IL
-re_3_tier_2 = 0  # RPS standard for IL
+re_3_tier_1 = 0.175             # RPS standard for IL
+re_3_tier_2 = 0                 # RPS standard for IL
 
-re_4_tier_1 = 0.07  # RPS standard for IN
-re_4_tier_2 = 0  # RPS standard for IN
+re_4_tier_1 = 0.07              # RPS standard for IN
+re_4_tier_2 = 0                 # RPS standard for IN
 
-re_5_no_tier = 0  # RPS standard for KY
+re_5_no_tier = 0                # RPS standard for KY
 
-re_6_tier_1 = 0.25  # RPS standard for MD tier 1
-re_6_tier_2 = 0  # RPS standard for MD tier 2
+re_6_tier_1 = 0.25              # RPS standard for MD tier 1
+re_6_tier_2 = 0                 # RPS standard for MD tier 2
 
-re_7_tier_1 = 0.150  # RPS standard for MI
-re_7_tier_2 = 0  # RPS standard for MI
+re_7_tier_1 = 0.150             # RPS standard for MI
+re_7_tier_2 = 0                 # RPS standard for MI
 
-re_8_tier_1 = 0.125  # RPS standard for NC
-re_8_tier_2 = 0  # RPS standard for NC
+re_8_tier_1 = 0.125             # RPS standard for NC
+re_8_tier_2 = 0                 # RPS standard for NC
 
-re_9_tier_1 = 0.210  # RPS standard for NJ tier 1
-re_9_tier_2 = 0.025  # RPS standard for NJ tier 2
+re_9_tier_1 = 0.210             # RPS standard for NJ tier 1
+re_9_tier_2 = 0.025             # RPS standard for NJ tier 2
 
-re_10_tier_1 = 0.075  # RPS standard for OH
-re_10_tier_2 = 0  # RPS standard for OH
+re_10_tier_1 = 0.075            # RPS standard for OH
+re_10_tier_2 = 0                # RPS standard for OH
 
-re_11_tier_1 = 0.080  # RPS standard for PA tier 1
-re_11_tier_2 = 0.10  # RPS standard for PA tier 2
+re_11_tier_1 = 0.080            # RPS standard for PA tier 1
+re_11_tier_2 = 0.10             # RPS standard for PA tier 2
 
-re_12_no_tier = 0  # RPS standard for TN
-re_13_no_tier = 0  # RPS standard for VA
-re_14_no_tier = 0  # RPS standard for WV
+re_12_no_tier = 0               # RPS standard for TN
+re_13_no_tier = 0               # RPS standard for VA
+re_14_no_tier = 0               # RPS standard for WV
 
 # SREC:
-se_1 = 0.0185  # solar standard for DC
-se_2 = 0.0250  # solar standard for DE
-se_3 = 0.0105  # solar standard for IL
-se_4 = 0  # solar standard for IN
-se_5 = 0  # solar standard for KY
-se_6 = 0.025  # solar standard for MD
-se_7 = 0  # solar standard for MI
-se_8 = 0.0020  # solar standard for NC
-se_9 = 0.051  # solar standard for NJ
-se_10 = 0.0030  # solar standard for OH
-se_11 = 0.0050  # solar standard for PA
-se_12 = 0  # solar standard for TN
-se_13 = 0  # solar standard for VA
-se_14 = 0  # solar standard for WV
+se_1 = 0.0185                   # solar standard for DC
+se_2 = 0.0250                   # solar standard for DE
+se_3 = 0.0105                   # solar standard for IL
+se_4 = 0                        # solar standard for IN
+se_5 = 0                        # solar standard for KY
+se_6 = 0.025                    # solar standard for MD
+se_7 = 0                        # solar standard for MI
+se_8 = 0.0020                   # solar standard for NC
+se_9 = 0.051                    # solar standard for NJ
+se_10 = 0.0030                  # solar standard for OH
+se_11 = 0.0050                  # solar standard for PA
+se_12 = 0                       # solar standard for TN
+se_13 = 0                       # solar standard for VA
+se_14 = 0                       # solar standard for WV
 
 re_tier_1 = np.hstack((re_1_tier_1, re_2_tier_1, re_3_tier_1, re_4_tier_1, re_5_no_tier, re_6_tier_1, re_7_tier_1,
                        re_8_tier_1, re_9_tier_1, re_10_tier_1, re_11_tier_1, re_12_no_tier,
@@ -319,7 +342,7 @@ region_5_no_plants = np.count_nonzero(supply_data[:, 1] == 5)
 pjm_no_plants = region_1_no_plants + region_2_no_plants + region_3_no_plants + region_4_no_plants + region_5_no_plants
 
 # Units in regions matrix:
-units_in_region = np.zeros((pjm_no_plants,I))
+units_in_region = np.zeros((pjm_no_plants, I))
 for j_1 in range(region_1_no_plants):
     units_in_region[j_1, 0] = 1
 
@@ -396,9 +419,8 @@ unit_dummy_tier2 = np.multiply(tier_2_cat_tile, unit_dummy_tier2_temp)
 unit_dummy_solar = np.multiply(solar_cat_tile, unit_dummy_solar_temp)
 
 # Flow constraints (in 10 lines):
-no_trans = np.zeros(T)
-trans_factor = np.vstack((trans_factor_data[0, :], trans_factor_data[1, :], trans_factor_data[2, :], no_trans, no_trans,
-                          no_trans, trans_factor_data[3, :], no_trans, no_trans, trans_factor_data[4, :]))
+trans_factor = np.vstack((trans_factor_data[0, :], trans_factor_data[1, :], trans_factor_data[2, :],
+                          trans_factor_data[3, :], trans_factor_data[4, :]))
 
 # Read emission intensity data:
 emission_data_1 = supply_data[1:region_1_no_plants, 107]
@@ -499,398 +521,6 @@ marginal_cost_3 = supply_data_3[:, 4:100]
 marginal_cost_4 = supply_data_4[:, 4:100]
 marginal_cost_5 = supply_data_5[:, 4:100]
 
-# Wind MC:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 8:
-        marginal_cost_1[i, :] = marginal_cost_1[i, :] + vom_wind
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 8:
-        marginal_cost_2[i, :] = marginal_cost_2[i, :] + vom_wind
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 8:
-        marginal_cost_3[i, :] = marginal_cost_3[i, :] + vom_wind
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 8:
-        marginal_cost_4[i, :] = marginal_cost_4[i, :] + vom_wind
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 2:
-        marginal_cost_5[i, :] = marginal_cost_5[i, :] + vom_wind
-
-# Solar MC:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 7:
-        marginal_cost_1[i, :] = marginal_cost_1[i, :] + vom_solar
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 7:
-        marginal_cost_2[i, :] = marginal_cost_2[i, :] + vom_solar
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 7:
-        marginal_cost_3[i, :] = marginal_cost_3[i, :] + vom_solar
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 7:
-        marginal_cost_4[i, :] = marginal_cost_4[i, :] + vom_solar
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 7:
-        marginal_cost_5[i, :] = marginal_cost_5[i, :] + vom_solar
-
-# Hydro MC:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 3:
-        marginal_cost_1[i, :] = marginal_cost_1[i, :] + vom_hydro
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 3:
-        marginal_cost_2[i, :] = marginal_cost_2[i, :] + vom_hydro
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 3:
-        marginal_cost_3[i, :] = marginal_cost_3[i, :] + vom_hydro
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 3:
-        marginal_cost_4[i, :] = marginal_cost_4[i, :] + vom_hydro
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 3:
-        marginal_cost_5[i, :] = marginal_cost_5[i, :] + vom_hydro
-
-# Nuclear MC:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 4:
-        marginal_cost_1[i, :] = marginal_cost_1[i, :]*(1+nuclear_gr) + vom_nuclear
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 4:
-        marginal_cost_2[i, :] = marginal_cost_2[i, :]*(1+nuclear_gr) + vom_nuclear
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 4 and state_3[i] == 3:
-        marginal_cost_3[i, :] = marginal_cost_3[i, :]*(1+nuclear_gr) + vom_nuclear - 16.5
-    elif fuel_region_3[i] == 4 and state_3[i] == 9:
-        marginal_cost_3[i, :] = marginal_cost_3[i, :]*(1+nuclear_gr) + vom_nuclear - 10.012
-    elif fuel_region_3[i] == 4 and state_3[i] != 9 and state_3[i] != 3:
-        marginal_cost_3[i, :] = marginal_cost_3[i, :]*(1+nuclear_gr) + vom_nuclear
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 4 and state_4[i] == 3:
-        marginal_cost_4[i, :] = marginal_cost_4[i, :]*(1+nuclear_gr) + vom_nuclear - 16.5
-    elif fuel_region_4[i] == 4 and state_4[i] == 9:
-        marginal_cost_4[i, :] = marginal_cost_4[i, :]*(1+nuclear_gr) + vom_nuclear - 10.012
-    elif fuel_region_4[i] == 4 and state_4[i] != 9 and state_4[i] != 3:
-        marginal_cost_4[i, :] = marginal_cost_4[i, :]*(1+nuclear_gr) + vom_nuclear
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 4 and state_5[i] == 3:
-        marginal_cost_5[i, :] = marginal_cost_5[i, :]*(1+nuclear_gr) + vom_nuclear - 16.5
-    elif fuel_region_5[i] == 4 and state_5[i] == 9:
-        marginal_cost_5[i, :] = marginal_cost_5[i, :]*(1+nuclear_gr) + vom_nuclear - 10.012
-    elif fuel_region_5[i] == 4 and state_5[i] != 9 and state_5[i] != 3:
-        marginal_cost_5[i, :] = marginal_cost_5[i, :]*(1+nuclear_gr) + vom_nuclear
-
-# Biomass MC:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 1:
-        marginal_cost_1[i, :] = marginal_cost_1[i, :]*f_cs_bio*(1+bio_gr) + vom_bio_PA
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 1:
-        marginal_cost_2[i, :] = marginal_cost_2[i, :]*f_cs_bio*(1+bio_gr) + vom_bio_PA
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 1:
-        marginal_cost_3[i, :] = marginal_cost_3[i, :]*f_cs_bio*(1+bio_gr) + vom_bio_RPJM
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 1:
-        marginal_cost_4[i, :] = marginal_cost_4[i, :]*f_cs_bio*(1+bio_gr) + vom_bio_RPJM
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 1:
-        marginal_cost_5[i, :] = marginal_cost_5[i, :]*f_cs_bio*(1+bio_gr) + vom_bio_RPJM
-
-# Gas MC:
-# Winter - Gas:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 9:
-        marginal_cost_1[i, 0:24] = f_cs_gas_winter*np.multiply(marginal_cost_1[i, 0:24], gas_gr_1[i, 0:24]) \
-                                   + vom_gas_PA_winter
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 9:
-        marginal_cost_2[i, 0:24] = f_cs_gas_winter*np.multiply(marginal_cost_2[i, 0:24], gas_gr_2[i, 0:24]) \
-                                   + vom_gas_PA_winter
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 9:
-        marginal_cost_3[i, 0:24] = f_cs_gas_winter*np.multiply(marginal_cost_3[i, 0:24], gas_gr_3[i, 0:24]) \
-                                   + vom_gas_RPJM_winter
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 9:
-        marginal_cost_4[i, 0:24] = f_cs_gas_winter*np.multiply(marginal_cost_4[i, 0:24], gas_gr_4[i, 0:24]) \
-                                   + vom_gas_RPJM_winter
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 9:
-        marginal_cost_5[i, 24:48] = f_cs_gas_winter*np.multiply(marginal_cost_5[i, 24:48], gas_gr_5[i, 0:24]) \
-                                   + vom_gas_RPJM_winter
-
-# Spring - Gas:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 9:
-        marginal_cost_1[i, 24:48] = f_cs_gas_spring*np.multiply(marginal_cost_1[i, 24:48], gas_gr_1[i, 24:48]) \
-                                   + vom_gas_PA_spring
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 9:
-        marginal_cost_2[i, 24:48] = f_cs_gas_spring*np.multiply(marginal_cost_2[i, 24:48], gas_gr_2[i, 24:48]) \
-                                   + vom_gas_PA_spring
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 9:
-        marginal_cost_3[i, 24:48] = f_cs_gas_spring*np.multiply(marginal_cost_3[i, 24:48], gas_gr_3[i, 24:48]) \
-                                   + vom_gas_PA_spring
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 9:
-        marginal_cost_4[i, 24:48] = f_cs_gas_spring*np.multiply(marginal_cost_4[i, 24:48], gas_gr_4[i, 24:48]) \
-                                   + vom_gas_PA_spring
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 9:
-        marginal_cost_5[i, 24:48] = f_cs_gas_spring*np.multiply(marginal_cost_5[i, 24:48], gas_gr_5[i, 24:48]) \
-                                   + vom_gas_PA_spring
-
-# Summer - Gas:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 9:
-        marginal_cost_1[i, 48:72] = f_cs_gas_summer*np.multiply(marginal_cost_1[i, 48:72], gas_gr_1[i, 48:72]) \
-                                   + vom_gas_PA_summer
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 9:
-        marginal_cost_2[i, 48:72] = f_cs_gas_summer*np.multiply(marginal_cost_2[i, 48:72], gas_gr_2[i, 48:72]) \
-                                   + vom_gas_PA_summer
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 9:
-        marginal_cost_3[i, 48:72] = f_cs_gas_summer*np.multiply(marginal_cost_3[i, 48:72], gas_gr_3[i, 48:72]) \
-                                   + vom_gas_PA_summer
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 9:
-        marginal_cost_4[i, 48:72] = f_cs_gas_summer*np.multiply(marginal_cost_4[i, 48:72], gas_gr_4[i, 48:72]) \
-                                   + vom_gas_PA_summer
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 9:
-        marginal_cost_5[i, 48:72] = f_cs_gas_summer*np.multiply(marginal_cost_5[i, 48:72], gas_gr_5[i, 48:72]) \
-                                   + vom_gas_PA_summer
-
-# Fall - Gas:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 9:
-        marginal_cost_1[i, 72:T] = f_cs_gas_fall*np.multiply(marginal_cost_1[i, 72:T], gas_gr_1[i, 72:T]) \
-                                   + vom_gas_PA_fall
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 9:
-        marginal_cost_2[i, 72:T] = f_cs_gas_fall*np.multiply(marginal_cost_2[i, 72:T], gas_gr_2[i, 72:T]) \
-                                   + vom_gas_PA_fall
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 9:
-        marginal_cost_3[i, 72:T] = f_cs_gas_fall*np.multiply(marginal_cost_3[i, 72:T], gas_gr_3[i, 72:T]) \
-                                   + vom_gas_PA_fall
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 9:
-        marginal_cost_4[i, 72:T] = f_cs_gas_fall*np.multiply(marginal_cost_4[i, 72:T], gas_gr_4[i, 72:T]) \
-                                   + vom_gas_PA_fall
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 9:
-        marginal_cost_5[i, 72:T] = f_cs_gas_fall*np.multiply(marginal_cost_5[i, 72:T], gas_gr_5[i, 72:T]) \
-                                   + vom_gas_PA_fall
-
-# Oil MC:
-# Winter - Oil:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 6:
-        marginal_cost_1[i, 0:24] = marginal_cost_1[i, 0:24]*f_cs_oil_winter*(1+oil_gr) + vom_oil_PA
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 6:
-        marginal_cost_2[i, 0:24] = marginal_cost_2[i, 0:24]*f_cs_oil_winter*(1+oil_gr) + vom_oil_PA
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 6:
-        marginal_cost_3[i, 0:24] = marginal_cost_3[i, 0:24]*f_cs_oil_winter*(1+oil_gr) + vom_oil_RPJM
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 6:
-        marginal_cost_4[i, 0:24] = marginal_cost_4[i, 0:24]*f_cs_oil_winter*(1+oil_gr) + vom_oil_RPJM
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 6:
-        marginal_cost_5[i, 24:48] = marginal_cost_5[i, 24:48]*f_cs_oil_winter*(1+oil_gr) + vom_oil_RPJM
-
-# Spring - Oil:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 6:
-        marginal_cost_1[i, 24:48] = marginal_cost_1[i, 24:48]*f_cs_oil_spring*(1+oil_gr) + vom_oil_PA
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 6:
-        marginal_cost_2[i, 24:48] = marginal_cost_2[i, 24:48]*f_cs_oil_spring*(1+oil_gr) + vom_oil_PA
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 6:
-        marginal_cost_3[i, 24:48] = marginal_cost_3[i, 24:48]*f_cs_oil_spring*(1+oil_gr) + vom_oil_RPJM
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 6:
-        marginal_cost_4[i, 24:48] = marginal_cost_4[i, 24:48]*f_cs_oil_spring*(1+oil_gr) + vom_oil_RPJM
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 6:
-        marginal_cost_5[i, 24:48] = marginal_cost_5[i, 24:48]*f_cs_oil_spring*(1+oil_gr) + vom_oil_RPJM
-
-# Summer - Oil:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 6:
-        marginal_cost_1[i, 48:72] = marginal_cost_1[i, 48:72]*f_cs_oil_summer*(1+oil_gr) + vom_oil_PA
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 6:
-        marginal_cost_2[i, 48:72] = marginal_cost_2[i, 48:72]*f_cs_oil_summer*(1+oil_gr) + vom_oil_PA
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 6:
-        marginal_cost_3[i, 48:72] = marginal_cost_3[i, 48:72]*f_cs_oil_summer*(1+oil_gr) + vom_oil_RPJM
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 6:
-        marginal_cost_4[i, 48:72] = marginal_cost_4[i, 48:72]*f_cs_oil_summer*(1+oil_gr) + vom_oil_RPJM
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 6:
-        marginal_cost_5[i, 48:72] = marginal_cost_5[i, 48:72]*f_cs_oil_summer*(1+oil_gr) + vom_oil_RPJM
-
-# Fall - Oil:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 6:
-        marginal_cost_1[i, 72:T] = marginal_cost_1[i, 72:T]*f_cs_oil_fall*(1+oil_gr) + vom_oil_PA
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 6:
-        marginal_cost_2[i, 72:T] = marginal_cost_2[i, 72:T]*f_cs_oil_fall*(1+oil_gr) + vom_oil_PA
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 6:
-        marginal_cost_3[i, 72:T] = marginal_cost_3[i, 72:T]*f_cs_oil_fall*(1+oil_gr) + vom_oil_RPJM
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 6:
-        marginal_cost_4[i, 72:T] = marginal_cost_4[i, 72:T]*f_cs_oil_fall*(1+oil_gr) + vom_oil_RPJM
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 6:
-        marginal_cost_5[i, 72:T] = marginal_cost_5[i, 72:T]*f_cs_oil_fall*(1+oil_gr) + vom_oil_RPJM
-
-# Coal MC:
-# Winter - Coal:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 2:
-        marginal_cost_1[i, 0:24] = marginal_cost_1[i, 0:24]*f_cs_coal_winter*(1+coal_gr) + vom_coal_PA_winter
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 2:
-        marginal_cost_2[i, 0:24] = marginal_cost_2[i, 0:24]*f_cs_coal_winter*(1+coal_gr) + vom_coal_PA_winter
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 2:
-        marginal_cost_3[i, 0:24] = marginal_cost_3[i, 0:24]*f_cs_coal_winter*(1+coal_gr) + vom_coal_RPJM_winter
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 2:
-        marginal_cost_4[i, 0:24] = marginal_cost_4[i, 0:24]*f_cs_coal_winter*(1+coal_gr) + vom_coal_RPJM_winter
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 2:
-        marginal_cost_5[i, 24:48] = marginal_cost_5[i, 24:48]*f_cs_coal_winter*(1+coal_gr) + vom_coal_RPJM_winter
-
-# Spring - Coal:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 2:
-        marginal_cost_1[i, 24:48] = marginal_cost_1[i, 24:48]*f_cs_coal_spring*(1+coal_gr) + vom_coal_PA_spring
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 2:
-        marginal_cost_2[i, 24:48] = marginal_cost_2[i, 24:48]*f_cs_coal_spring*(1+coal_gr) + vom_coal_PA_spring
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 2:
-        marginal_cost_3[i, 24:48] = marginal_cost_3[i, 24:48]*f_cs_coal_spring*(1+coal_gr) + vom_coal_PA_spring
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 2:
-        marginal_cost_4[i, 24:48] = marginal_cost_4[i, 24:48]*f_cs_coal_spring*(1+coal_gr) + vom_coal_PA_spring
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 2:
-        marginal_cost_5[i, 24:48] = marginal_cost_5[i, 24:48]*f_cs_coal_spring*(1+coal_gr) + vom_coal_PA_spring
-
-# Summer - Coal:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 2:
-        marginal_cost_1[i, 48:72] = marginal_cost_1[i, 48:72]*f_cs_coal_summer*(1+coal_gr) + vom_coal_PA_summer
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 2:
-        marginal_cost_2[i, 48:72] = marginal_cost_2[i, 48:72]*f_cs_coal_summer*(1+coal_gr) + vom_coal_PA_summer
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 2:
-        marginal_cost_3[i, 48:72] = marginal_cost_3[i, 48:72]*f_cs_coal_summer*(1+coal_gr) + vom_coal_PA_summer
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 2:
-        marginal_cost_4[i, 48:72] = marginal_cost_4[i, 48:72]*f_cs_coal_summer*(1+coal_gr) + vom_coal_PA_summer
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 2:
-        marginal_cost_5[i, 48:72] = marginal_cost_5[i, 48:72]*f_cs_coal_summer*(1+coal_gr) + vom_coal_PA_summer
-
-# Fall - Coal:
-for i in range(region_1_no_plants):
-    if fuel_region_1[i] == 2:
-        marginal_cost_1[i, 72:T] = marginal_cost_1[i, 72:T]*f_cs_coal_fall*(1+coal_gr) + vom_coal_PA_fall
-
-for i in range(region_2_no_plants):
-    if fuel_region_2[i] == 2:
-        marginal_cost_2[i, 72:T] = marginal_cost_2[i, 72:T]*f_cs_coal_fall*(1+coal_gr) + vom_coal_PA_fall
-
-for i in range(region_3_no_plants):
-    if fuel_region_3[i] == 2:
-        marginal_cost_3[i, 72:T] = marginal_cost_3[i, 72:T]*f_cs_coal_fall*(1+coal_gr) + vom_coal_PA_fall
-
-for i in range(region_4_no_plants):
-    if fuel_region_4[i] == 2:
-        marginal_cost_4[i, 72:T] = marginal_cost_4[i, 72:T]*f_cs_coal_fall*(1+coal_gr) + vom_coal_PA_fall
-
-for i in range(region_5_no_plants):
-    if fuel_region_5[i] == 2:
-        marginal_cost_5[i, 72:T] = marginal_cost_5[i, 72:T]*f_cs_coal_fall*(1+coal_gr) + vom_coal_PA_fall
-
 # Demand  parameters virtual bid percentage:
 z = zdata[:, 4]/100
 hours_all = hours[0:T, 1]
@@ -902,12 +532,14 @@ b_2 = marginal_cost_2
 b_3 = marginal_cost_3
 b_4 = marginal_cost_4
 b_5 = marginal_cost_5
+b = np.vstack((b_1, b_2, b_3, b_4, b_5))
 
 m_1 = 0 * b_1
 m_2 = 0 * b_2
 m_3 = 0 * b_3
 m_4 = 0 * b_4
 m_5 = 0 * b_5
+m = np.vstack((m_1, m_2, m_3, m_4,m_5))
 
 delta = hours_all
 
@@ -947,22 +579,16 @@ c_5 = (1 + (1 / etaD)) * p_region_5
 c = np.vstack((c_1, c_2, c_3, c_4, c_5))
 
 if trans_const == 1:
-    trans_data_temp = np.vstack((transmission_data[0, 20], transmission_data[1, 20],  transmission_data[2, 20], 0, 0, 0,
-                                 transmission_data[6, 20], 0, 0, transmission_data[9, 20]))
+    trans_data_temp = np.vstack((transmission_data[0, 20], transmission_data[1, 20],  transmission_data[2, 20],
+                                 transmission_data[6, 20], transmission_data[9, 20]))
     fbar_t = np.multiply(np.tile(trans_data_temp, (1, T)), trans_factor)
 elif trans_const == 0:
     fbar_12 = 99999
     fbar_13 = 99999
     fbar_14 = 99999
-    fbar_15 = 0
-    fbar_23 = 0
-    fbar_24 = 0
     fbar_25 = 99999
-    fbar_34 = 0
-    fbar_35 = 0
     fbar_45 = 99999
-    fbar_t = np.tile(np.vstack((fbar_12, fbar_13, fbar_14, fbar_15, fbar_23, fbar_24, fbar_25, fbar_34,
-                                    fbar_35, fbar_45)), (1, T))
+    fbar_t = np.tile(np.vstack((fbar_12, fbar_13, fbar_14, fbar_25, fbar_45)), (1, T))
 
 # ****************FINISH READING DATA****************************************
 
@@ -980,7 +606,7 @@ for ju in range(region_1_no_plants):
     elif fuel_region_1[ju] == 2 and supply_data_1[ju, 110] < 2000:
         cap_scaler_1[ju] = cs_coal_PA * 0.961
     elif fuel_region_1[ju] == 3 and supply_data_1[ju, 110] < 2000:
-        cap_scaler_1[ju,] = cs_hydro_PA * cf_hydro_PA
+        cap_scaler_1[ju] = cs_hydro_PA * cf_hydro_PA
     elif fuel_region_1[ju] == 4 and supply_data_1[ju, 110] < 2000:
         cap_scaler_1[ju] = cs_nuclear_PA * cf_nuclear_PA
     elif fuel_region_1[ju] == 5 and supply_data_1[ju, 110] < 2000:
@@ -1075,51 +701,99 @@ for ju in range(region_5_no_plants):
         cap_scaler_5[ju] = cs_gas_RPJM * 0.961
 
 cap_scaler = np.hstack((cap_scaler_1, cap_scaler_2, cap_scaler_3, cap_scaler_4, cap_scaler_5))
-upper_b_gen_in = np.multiply(cap_scaler, cap_region_t)
+upper_b_gen_in = np.tile(np.vstack(np.multiply(cap_scaler, cap_region_t)), I)
+upper_b_gen_in_temp = np.multiply(upper_b_gen_in, units_in_region)
+upper_b_gen_in_all = np.dstack([upper_b_gen_in_temp]*T)
 
 # Define sets:
 model.D = RangeSet(I)
 model.G_in = RangeSet(J)
 model.Fl = RangeSet(F)
-model.K = RangeSet(S*3)
+model.S = RangeSet(S)
 model.Ex_rec = RangeSet(J_r*S*3)
 model.T = RangeSet(T)
 
 # Define variables:
 model.d = Var(model.D, model.T, within=NonNegativeReals)
-model.gen_in = Var(model.G_in, model.T, bounds=(np.zeros((J, T)), np.tile(np.vstack(upper_b_gen_in), T)))
+model.gen_in = Var(model.G_in, model.D, model.T, bounds=(np.zeros((J, I, T)), upper_b_gen_in_all))
 model.fl = Var(model.Fl, model.T, bounds=(-fbar_t, fbar_t))
-model.k = Var(model.K, within=NonNegativeReals)
-model.gen_ex = Var(model.K, model.T, within=NonNegativeReals)
+model.k_g = Var(model.S, within=NonNegativeReals)
+model.k_w = Var(model.S, within=NonNegativeReals)
+model.k_s = Var(model.S, within=NonNegativeReals)
+model.gen_ex_g = Var(model.S, model.T, within=NonNegativeReals)
+model.gen_ex_w = Var(model.S, model.T, within=NonNegativeReals)
+model.gen_ex_s = Var(model.S, model.T, within=NonNegativeReals)
 model.ex_rec = Var(model.Ex_rec, within=NonNegativeReals) # still need to fix this
+
+f_matrix = np.array([[1, 1, 1, 0, 0], [-1, 0, 0, 1, 0], [0, -1, 0, 0, 0], [0, 0, -1, 0, 1], [0, 0, 0, -1, -1]])
+
 
 # Constraints:
 # external generation constraints:
-def gen_ex_constraint(model, k, t):
-    for k in model.K:
+def gen_ex_constraint_1(model, k_1, t):
+    for k_1 in model.S:
         for t in model.T:
-            return model.gen_ex[k, t] <= model.k[k]*avail_N_all[k]
+            return model.gen_ex_g[k_1, t] <= model.k[k_1]*avail_N_g[k_1]
 
-model.gen_ex_cstr = Constraint(model.K, model.T, rule=gen_ex_constraint)
+
+model.gen_ex_cstr_1 = Constraint(model.S, model.T, rule=gen_ex_constraint_1)
+
+def gen_ex_constraint_2(model, k_2, t):
+    for k_2 in model.S:
+        for t in model.T:
+            return model.gen_ex_w[k_2, t] <= model.k[k_2]*avail_N_w[k_2]
+
+
+model.gen_ex_cstr_2 = Constraint(model.S, model.T, rule=gen_ex_constraint_2)
+
+def gen_ex_constraint_3(model, k_3, t):
+    for k_3 in model.S:
+        for t in model.T:
+            return model.gen_ex_s[k_3, t] <= model.k[k_3]*avail_N_w[k_3]
+
+
+model.gen_ex_cstr_3 = Constraint(model.S, model.T, rule=gen_ex_constraint_3)
+
 
 # market clearing condition constraints:
 def market_clearing(model, i, t):
     for i in model.D:
         for t in model.T:
-            return sum(model.gen_in[g, t] for g in model.G_in) \
+            return sum(model.gen_in[g, i, t] for g in model.G_in) \
                   + sum(model.gen_ex[k, t] for k in model.K) \
                   + sum(model.fl[f, t] for f in model.Fl) \
                   == model.d[i, t]*lost_component[t]
 
+
 model.market_clearing_cstr = Constraint(model.D, model.T, rule=market_clearing)
 
-#sum(model.gen_in[g, t]*units_in_region[g, i] for g in model.G_in) \
+
+# sum(model.gen_in[g, t]*units_in_region[g, i] for g in model.G_in) \
 #                   + sum(model.gen_ex[k, t]*state_to_region[i, k] for k in model.K) \
 #                   + model.fl[0, t] + model.fl[1, t] + model.fl[2, t] \
 #                   == model.d[i, t]*lost_component[t]
 
 # RPS constraints:
+def rps_constraint_1(model,s_1):
+    for s_1 in model.S:
+        return (re_tier_1[s_1]-1)*sum(rps_tier_1_ratio[g] for g in model.G_in) \
+               + re_tier_1[s_1]*sum(rps_tier_1_ratio[g] for g in model.G_in) <= 0
+
+model.rps_constraint_1 = Constraint(model.S, rule=rps_constraint_1)
 
 # Objective function:
+def objective_func(model):
+    return -(sum((-0.5*n[i, t]*model.d[i, t]**2 + c[i, t]*model.d[i, t])*delta[t] for i in model.I for t in model.T) \
+           + sum(0.5*m[j]*model.gen_in[j, i, t]**2 + b[j]*model.gen_in[j, i, t] for j in model.G_in
+                 for i in model.D for t in model.T)\
+           - sum(C_N_g[s]*model.k_g[s] + C_N_w[s]*model.k_w[s] + C_N_s[s]*model.k_s[s] for s in model.S) \
+           - sum((MC_N_g[s, t]*model.gen_ex_g[s, t] + MC_N_w[s, t]*model.gen_ex_w[s, t]
+                  + MC_N_s[s, t]*model.gen_ex_s[s, t])*delta[t] for s in model.S for t in model.T))
 
+model.objective_func = Objective(rule=objective_func)
 
+# Solving the model:
+opt = SolverFactory('cplex')
+results = opt.solve(model, logfile='output.txt',
+                    symbolic_solver_labels=True, tee=True, load_solutions=True)
+model.solutions.store_to(results)
