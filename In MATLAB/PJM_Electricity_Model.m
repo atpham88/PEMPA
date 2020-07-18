@@ -1264,14 +1264,6 @@ elseif rps_const == 1
     mu_REC_star = mu_ineq00(J_r+1:J_r+S*3);
 end
 
-g_star_final_1 = g_1_star;
-g_star_final_2 = g_2_star;
-g_star_final_3 = g_3_star;
-g_star_final_4 = g_4_star;
-g_star_final_5 = g_5_star;
-
-g_star_final = [g_star_final_1;g_star_final_2;g_star_final_3;g_star_final_4;g_star_final_5];
-
 
 if dr==3
     if policy_sc==1
