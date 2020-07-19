@@ -1,31 +1,52 @@
 % PJM Electricity Model for 5 nodes.
-% 2022
-% With Cumulative Emission Cap
+% Basecase - Simulation to 2021 data
+% FINAL VERSION TO USE.
 % Finished coding on 10/24/2019 by An Pham.
 
-function [supply_data_new_2022,new_gr_all_temp_2022,p_star,d_star] = PJM_Electricity_Model_MB_2022(I,J,T,F,J_r,S,dr,trans_const,rps_const,cap_exp,policy_sc,ext_rec_sc,p_region_all,load_region_all,supply_data,rps_data,hours)  
+% Region 1: PA East
+% Region 2: PA West
+% Region 3: RPJM East
+% Region 4: BDC
+% Region 5: RPJM West
+
+% Available trasmission lines:
+% PA West to PA East: 1-2
+% PA East to RPJM East: 1-3
+% PA East to BDC: 1-4
+% PA West to RPJM West: 2-5
+% BDC to RPJM West: 4-5
+
+%**********************************************
+%% Switches:
+%**********************************************
+trans_const = 1;          % Whether or not there's existence of transmission constraint (==1:yes, ==0:no)
+rps_const = 1;            % Whether or not there's existence of RPS (==1:yes, ==0:no) 
+cap_exp = 1;              % Whether or not there's capacity expansion (==1:yes, ==0:no)
+ext_rec_sc = 2;           % External RECs (==1: constant, ==2: growing)
 
 %**********************************************
 %% Define Parameters and variables:
 %**********************************************
-state_e_bar_data = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/State Emission Caps/Mass-Based in PJM.xlsx';
-state_e_bar = xlsread(state_e_bar_data,'State Cap');
-
-e_PA = 90111436;          % Allocated emission permits in PA (1000 metric tons)
-e_RPJM = state_e_bar(15,1);       % Allocated emission permits in RPJM (1000 metric tons)
-
-etaD_t = [0.000001;0.000001;0.05];              % Assumed elasticity of demand
-etaD = etaD_t(dr);
+% Number of nodes, lines,load segment and elasticity of demand:
+I = 5;                    % Number of nodes    
+J = 884;                  % Number of aggregated units
+T = 96;                   % Number of load segments
+F = 10;                   % Number of aggregated transmission lines
+J_r = 262;                % Number of plants eligible to provide RECs to PJM states.
+S = 14;                   % Number of PJM states.  
+etaD = 0.05;              % Assumed elasticity of demand   
+% etaD = 0.000001;              % Assumed elasticity of demand     
 tot_loss_pct = 0.03412764857;  % Assume transmission lost % in the distribution system.
-gas_gr_data_2022 = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Gas price growth rates/gas_gr_2022.xlsx';
-gr_path_nj = 1;
+gas_gr_data_2021 = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Gas price growth rates/gas_gr_2021.xlsx';
 
-% Growth Rate:
-gas_gr_temp = xlsread(gas_gr_data_2022,'Sheet1');
-gas_gr = gas_gr_temp(:,1:T)*(1+0.1218);
-oil_gr = 0.196465782*(1+0.5393);
-coal_gr = 0.11*(1+0.0202);
-nuclear_gr = 0.0077;
+% 2021:
+load_growth = 0.012785;
+%load_growth = 0;
+gas_gr_temp = xlsread(gas_gr_data_2021,'Sheet1');
+gas_gr = (1+gas_gr_temp(:,1:T))*(1+0.1194);
+oil_gr = 0.196465782*(1+0.4675);
+coal_gr = 0.11*(1+0.0207);
+nuclear_gr = 0.0062;
 bio_gr = -0.2;
 
 cf_gr_hydro = 0.08;
@@ -34,14 +55,9 @@ cf_gr_solar = 0.12;
 cf_gr_nuclear = 0.029;
 
 % Capacity Expansion Parameters:
-C_N_PA = [72900;165500*(1-0.0170)^4;135000*(1-0.0219)^4];
-C_N_RPJM = [73900;165500*(1-0.0170)^4;130000*(1-0.0219)^4];
+C_N_PA = [70000;165500*(1-0.0170)^3;135000*(1-0.0219)^3];
+C_N_RPJM = [73900;165500*(1-0.0170)^3;130000*(1-0.0219)^3];
 C_N = [C_N_RPJM;C_N_RPJM;C_N_RPJM;C_N_RPJM;C_N_RPJM;C_N_RPJM;C_N_RPJM;C_N_RPJM;C_N_RPJM;C_N_RPJM;C_N_PA;C_N_RPJM;C_N_RPJM;C_N_RPJM];
-
-% Marginal cost:
-MC_N_PA = [21.1*(1+0.1218);0;0];
-MC_N_RPJM = [24.2*(1+0.1218);0;0];
-MC_N = [MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_PA;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM];
 
 % Capacity factor of new units:
 avail_g = 0.961;
@@ -54,79 +70,73 @@ if ext_rec_sc == 1
    rec_PA_g_sc = 0.615;
    rec_RPJM_g_sc = 0.814*1.08;
 elseif ext_rec_sc ==2
-   rec_PA_g_sc = 0.615*1.6142;
-   rec_RPJM_g_sc = 0.814*1.08*1.0589;
-end
-	  	  	  	
+   rec_PA_g_sc = 0.615*1.4859;
+   rec_RPJM_g_sc = 0.814*1.08*1.0587;
+end 	
+
+% Marginal cost for new units:
+MC_N_PA = [21.1;0;0]*(1+0.1194);
+MC_N_RPJM = [24.2;0;0]*(1+0.1194);
+MC_N = [MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM;MC_N_PA;MC_N_RPJM;MC_N_RPJM;MC_N_RPJM];
+
 % RPS data:
-if rps_const == 1
-   re_1_tier_1 = 0.20;                                % RPS standard for DC - tier 1
-   re_1_tier_2 = 0;                                   % RPS standard for DC - tier 2
+re_1_tier_1 = 0.20;                                % RPS standard for DC - tier 1
+re_1_tier_2 = 0;                                   % RPS standard for DC - tier 2
 
-   re_2_tier_1 = 0.22;                                % RPS standard for DE
-   re_2_tier_2 = 0;                                   % RPS standard for DE
+re_2_tier_1 = 0.21;                                % RPS standard for DE
+re_2_tier_2 = 0;                                   % RPS standard for DE
 
-   re_3_tier_1 = 0.19;                                % RPS standard for IL
-   re_3_tier_2 = 0;                                   % RPS standard for IL
+re_3_tier_1 = 0.175;                                % RPS standard for IL
+re_3_tier_2 = 0;                                   % RPS standard for IL
 
-   re_4_tier_1 = 0.07;                                % RPS standard for IN
-   re_4_tier_2 = 0;                                   % RPS standard for IN
+re_4_tier_1 = 0.07;                                 % RPS standard for IN
+re_4_tier_2 = 0;                                   % RPS standard for IN
 
-   re_5_no_tier = 0;                                  % RPS standard for KY
+re_5_no_tier = 0;                                  % RPS standard for KY
 
-   re_6_tier_1 = 0.25;                                % RPS standard for MD tier 1
-   re_6_tier_2 = 0;                               	  % RPS standard for MD tier 2
+re_6_tier_1 = 0.25;                                % RPS standard for MD tier 1
+re_6_tier_2 = 0;                               % RPS standard for MD tier 2
 
-   re_7_tier_1 = 0.150;                               % RPS standard for MI
-   re_7_tier_2 = 0;                                   % RPS standard for MI
+re_7_tier_1 = 0.150;                                % RPS standard for MI
+re_7_tier_2 = 0;                                   % RPS standard for MI
 
-   re_8_tier_1 = 0.125;                               % RPS standard for NC
-   re_8_tier_2 = 0;                                   % RPS standard for NC
+re_8_tier_1 = 0.125;                               % RPS standard for NC
+re_8_tier_2 = 0;                                   % RPS standard for NC
 
-if gr_path_nj==1
-   re_9_tier_1 = 0.245;
-else
-   re_9_tier_1 = 0.210;                               % RPS standard for NJ tier 1
-end
+re_9_tier_1 = 0.210;                                % RPS standard for NJ tier 1
+re_9_tier_2 = 0.025;                               % RPS standard for NJ tier 2
 
-   re_9_tier_2 = 0.025;                               % RPS standard for NJ tier 2
+re_10_tier_1 = 0.075;                              % RPS standard for OH
+re_10_tier_2 = 0;                                  % RPS standard for OH
 
-   re_10_tier_1 = 0.085;                              % RPS standard for OH
-   re_10_tier_2 = 0;                                  % RPS standard for OH
+re_11_tier_1 = 0.080;                               % RPS standard for PA tier 1
+re_11_tier_2 = 0.10;                               % RPS standard for PA tier 2
 
-   re_11_tier_1 = 0.080;                              % RPS standard for PA tier 1
-   re_11_tier_2 = 0.10;                               % RPS standard for PA tier 2
+re_12_no_tier = 0;                                 % RPS standard for TN
+re_13_no_tier = 0;                                 % RPS standard for VA
+re_14_no_tier = 0;                                 % RPS standard for WV
 
-   re_12_no_tier = 0;                                 % RPS standard for TN
-   re_13_no_tier = 0;                                 % RPS standard for VA
-   re_14_no_tier = 0;                                 % RPS standard for WV
+% SREC:
+se_1 = 0.0185;                                      % solar standard for DC
+se_2 = 0.0250;                                      % solar standard for DE
+se_3 = 0.0105;                                      % solar standard for IL
+se_4 = 0;                                          % solar standard for IN
+se_5 = 0;                                          % solar standard for KY
+se_6 = 0.025;                                      % solar standard for MD
+se_7 = 0;                                          % solar standard for MI
+se_8 = 0.0020;                                      % solar standard for NC
+se_9 = 0.051;                                     % solar standard for NJ
+se_10 = 0.0030;                                    % solar standard for OH
+se_11 = 0.0050;                                    % solar standard for PA
+se_12 = 0;                                         % solar standard for TN
+se_13 = 0;                                         % solar standard for VA
+se_14 = 0;                                         % solar standard for WV
 
-   % SREC:
-   se_1 = 0.0218;                                     % solar standard for DC
-   se_2 = 0.0275;                                     % solar standard for DE
-   se_3 = 0.0114;                                     % solar standard for IL
-   se_4 = 0;                                          % solar standard for IN
-   se_5 = 0;                                          % solar standard for KY
-   se_6 = 0.025;                                      % solar standard for MD
-   se_7 = 0;                                          % solar standard for MI
-   se_8 = 0.0020;                                     % solar standard for NC
-   se_9 = 0.051;                                      % solar standard for NJ
-   se_10 = 0.0034;                                    % solar standard for OH
-   se_11 = 0.0050;                                    % solar standard for PA
-   se_12 = 0;                                         % solar standard for TN
-   se_13 = 0;                                         % solar standard for VA
-   se_14 = 0;                                         % solar standard for WV
+re_tier_1 = [re_1_tier_1;re_2_tier_1;re_3_tier_1;re_4_tier_1;re_5_no_tier;re_6_tier_1;re_7_tier_1;re_8_tier_1;re_9_tier_1;re_10_tier_1;re_11_tier_1;re_12_no_tier;re_13_no_tier;re_14_no_tier];
+re_tier_2 = [re_1_tier_2;re_2_tier_2;re_3_tier_2;re_4_tier_2;re_5_no_tier;re_6_tier_2;re_7_tier_2;re_8_tier_2;re_9_tier_2;re_10_tier_2;re_11_tier_2;re_12_no_tier;re_13_no_tier;re_14_no_tier];
+se = [se_1;se_2;se_3;se_4;se_5;se_6;se_7;se_8;se_9;se_10;se_11;se_12;se_13;se_14];
 
-   re_tier_1 = [re_1_tier_1;re_2_tier_1;re_3_tier_1;re_4_tier_1;re_5_no_tier;re_6_tier_1;re_7_tier_1;re_8_tier_1;re_9_tier_1;re_10_tier_1;re_11_tier_1;re_12_no_tier;re_13_no_tier;re_14_no_tier];
-   re_tier_2 = [re_1_tier_2;re_2_tier_2;re_3_tier_2;re_4_tier_2;re_5_no_tier;re_6_tier_2;re_7_tier_2;re_8_tier_2;re_9_tier_2;re_10_tier_2;re_11_tier_2;re_12_no_tier;re_13_no_tier;re_14_no_tier];
-   se = [se_1;se_2;se_3;se_4;se_5;se_6;se_7;se_8;se_9;se_10;se_11;se_12;se_13;se_14];
-elseif rps_const==0
-    re_tier_1 = zeros(14,1);
-    re_tier_2 = zeros(14,1);
-    se = zeros(14,1);
-end
-
-lg = 0.017083;
+lg = 0.012785;
 
 % Adding generation for states that are half outside of PJM:
 x_gen_tot_DC = 0;
@@ -197,23 +207,38 @@ x_gen_solar = [x_gen_solar_DC;x_gen_solar_DE;x_gen_solar_IL;x_gen_solar_IN;x_gen
 x_gen = [x_gen_tot,x_gen_tier1,x_gen_tier2,x_gen_solar];
 
 %% Read Data:
+% Read Demand Data:
+
+demand_curve = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Demand Data/Demand Curves_96_2021.xlsx';
+
+load_data_region_1_temp = xlsread(demand_curve,'region 1');
+load_data_region_2_temp = xlsread(demand_curve,'region 2');
+load_data_region_3_temp = xlsread(demand_curve,'region 3');
+load_data_region_4_temp = xlsread(demand_curve,'region 4');
+load_data_region_5_temp = xlsread(demand_curve,'region 5');
+
+hours = xlsread(demand_curve,'hours');
+
 % Read Transmission Network Data:
-transmission_network = '/storage/work/a/akp5369/Model_in_Matlab/Input Data/Transmission Networks.xlsx';
+transmission_network = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Transmission/Transmission Networks.xlsx';
 transmission_data = xlsread(transmission_network,'Transmission Network');
 
 % Virtual Bid:
-virtual_bid = '/storage/work/a/akp5369/Model_in_Matlab/Input Data/results_no_trans_const3.xlsx';
+virtual_bid = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Virtual Bids/results_no_trans_const3.xlsx';
 zdata = xlsread(virtual_bid,'beta');
 
 % Transmission Factor:
-trans_factor = '/storage/work/a/akp5369/Model_in_Matlab/Input Data/trans_scaler.xlsx';
+trans_factor = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Transmission/trans_scaler.xlsx';
 trans_factor_data = xlsread(trans_factor,'Sheet1');
 
-% Supply Data:
+% Read Supplier Data:
+supply_curve = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Supply Data/Supply_Curve_96_final_2021.xlsx';
+
+supply_data = xlsread(supply_curve,'bin 1');
 state = supply_data(:,112);
 ei_ratio = supply_data(:,113);
-rps_tier_1_ratio = rps_data(:,2);
-rps_tier_2_ratio = rps_data(:,3);
+rps_tier_1_ratio = supply_data(:,114);
+rps_tier_2_ratio = supply_data(:,115);
 
 region_1_no_plants = find(supply_data(:,2)==1,1,'last');
 region_2_no_plants = find(supply_data(:,2)==2,1,'last') - region_1_no_plants;
@@ -228,32 +253,12 @@ state_3 = state(region_1_no_plants+region_2_no_plants+1:region_1_no_plants+regio
 state_4 = state(region_1_no_plants+region_2_no_plants+region_3_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants,:);
 state_5 = state(region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants+1:end,:);
 
-no_bin_1  = supply_data(1:region_1_no_plants,111);
-no_bin_2  = supply_data(region_1_no_plants+1:region_1_no_plants+region_2_no_plants,111);
-no_bin_3  = supply_data(region_1_no_plants+region_2_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants,11);
-no_bin_4  = supply_data(region_1_no_plants+region_2_no_plants+region_3_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants,111);
-no_bin_5  = supply_data(region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants+1:end,111);
-
 % Gas price growth rate:
 gas_gr_1 = gas_gr(1:region_1_no_plants,:);
 gas_gr_2 = gas_gr(region_1_no_plants+1:region_1_no_plants+region_2_no_plants,:);
 gas_gr_3 = gas_gr(region_1_no_plants+region_2_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants,:);
 gas_gr_4 = gas_gr(region_1_no_plants+region_2_no_plants+region_3_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants,:);
 gas_gr_5 = gas_gr(region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants+1:end,:);
-
-% Read emission intensity data:
-emission_data = xlsread('/storage/work/a/akp5369/Model_in_Matlab/Input Data/Emission_Intensity_2022.xlsx');
-emission_data_1 = emission_data(1:region_1_no_plants,:);
-emission_data_2 = emission_data(region_1_no_plants+1:region_1_no_plants+region_2_no_plants,:);
-emission_data_3 = emission_data(region_1_no_plants+region_2_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants,:);
-emission_data_4 = emission_data(region_1_no_plants+region_2_no_plants+region_3_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants,:);
-emission_data_5 = emission_data(region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants+1:end,:);
-
-ei_ratio_1 = ei_ratio(1:region_1_no_plants,:);
-ei_ratio_2 = ei_ratio(region_1_no_plants+1:region_1_no_plants+region_2_no_plants,:);
-ei_ratio_3 = ei_ratio(region_1_no_plants+region_2_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants,:);
-ei_ratio_4 = ei_ratio(region_1_no_plants+region_2_no_plants+region_3_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants,:);
-ei_ratio_5 = ei_ratio(region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants+1:end,:);
 
 supply_data_1 = supply_data(1:region_1_no_plants,:);
 supply_data_2 = supply_data(region_1_no_plants+1:region_1_no_plants+region_2_no_plants,:);
@@ -268,10 +273,8 @@ cap_region_4 = supply_data_4(:,3);
 cap_region_5 = supply_data_5(:,3);
 cap_region_t = [cap_region_1;cap_region_2;cap_region_3;cap_region_4;cap_region_5];
 
-supply_data_all = [supply_data,rps_tier_1_ratio,rps_tier_2_ratio];
-
 % REC units:
-REC_units = '/storage/work/a/akp5369/Model_in_Matlab/Input Data/REC_units_clear2.xlsx';
+REC_units = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/External RECs/REC_units_clear2.xlsx';
 tier1_units_data = xlsread(REC_units,'tier 1');
 tier2_units_data = xlsread(REC_units,'tier 2');
 solar_units_data = xlsread(REC_units,'solar');
@@ -305,18 +308,13 @@ end
 no_trans = zeros(1,96);
 trans_factor = [trans_factor_data(1,:);trans_factor_data(2,:);trans_factor_data(3,:);no_trans;no_trans;no_trans;trans_factor_data(4,:);no_trans;no_trans;trans_factor_data(5,:)];
 
-% Region 1: PA East
-% Region 2: PA West
-% Region 3: RPJM East
-% Region 4: BDC
-% Region 5: RPJM West
-
-% Available trasmission lines:
-% PA West to PA East: 1-2
-% PA East to RPJM East: 1-3
-% PA East to Central RPJM: 1-4
-% PA West to RPJM West: 2-5
-% Central RPJM to RPJM West: 4-5
+% Read emission intensity data:
+% Read emission intensity data:
+emission_data_1 = supply_data(1:region_1_no_plants,108);
+emission_data_2 = supply_data(region_1_no_plants+1:region_1_no_plants+region_2_no_plants,108);
+emission_data_3 = supply_data(region_1_no_plants+region_2_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants,108);
+emission_data_4 = supply_data(region_1_no_plants+region_2_no_plants+region_3_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants,108);
+emission_data_5 = supply_data(region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants+1:end,108);
 
 rec_g_sc_all = zeros(J_r,1);
 for j=1:J_r
@@ -328,16 +326,18 @@ for j=1:J_r
 end
 
 % Emissions intensity:
+ei_ratio_1 = ei_ratio(1:region_1_no_plants,:);
+ei_ratio_2 = ei_ratio(region_1_no_plants+1:region_1_no_plants+region_2_no_plants,:);
+ei_ratio_3 = ei_ratio(region_1_no_plants+region_2_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants,:);
+ei_ratio_4 = ei_ratio(region_1_no_plants+region_2_no_plants+region_3_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants,:);
+ei_ratio_5 = ei_ratio(region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants+1:end,:);
 
-size(emission_data)
-size(ei_ratio)
-
-ei_region_1 = emission_data_1.*ei_ratio_1*0.907185;
-ei_region_2 = emission_data_2.*ei_ratio_2*0.907185;
-ei_region_3 = emission_data_3.*ei_ratio_3*0.907185;
-ei_region_4 = emission_data_4.*ei_ratio_4*0.907185;
-ei_region_5 = emission_data_5.*ei_ratio_5*0.907185;
-ei_region_t = [ei_region_1;ei_region_2;ei_region_3;ei_region_4;ei_region_5];
+% Emissions intensity:
+ei_region_1 = supply_data_1(:,108)*0.907185.*ei_ratio_1;
+ei_region_2 = supply_data_2(:,108)*0.907185.*ei_ratio_2;
+ei_region_3 = supply_data_3(:,108)*0.907185.*ei_ratio_3;
+ei_region_4 = supply_data_4(:,108)*0.907185.*ei_ratio_4;
+ei_region_5 = supply_data_5(:,108)*0.907185.*ei_ratio_5;
 
 % Fueltype:
 fuel_region_1 = supply_data_1(:,1);
@@ -383,10 +383,10 @@ marginal_cost_2 = supply_data_2(:,5:100);
 marginal_cost_3 = supply_data_3(:,5:100);
 marginal_cost_4 = supply_data_4(:,5:100);
 marginal_cost_5 = supply_data_5(:,5:100);
-marginal_cost_t = [marginal_cost_1;marginal_cost_2;marginal_cost_3;marginal_cost_4;marginal_cost_5];
 
 % Demand parameters virtual bid percentage:
 z = zdata(:,5)/100;
+hours_all = hours(1:96,2);
 net_vb = zdata(:,12);
     
 b_1 = marginal_cost_1;
@@ -401,19 +401,21 @@ m_3 = zeros*b_3;
 m_4 = zeros*b_4;
 m_5 = zeros*b_5;
 
-delta = hours;
+delta = hours_all;
 
-p_region_1 = p_region_all(:,1);
-p_region_2 = p_region_all(:,2);
-p_region_3 = p_region_all(:,3);
-p_region_4 = p_region_all(:,4);
-p_region_5 = p_region_all(:,5);
+% Total Hourly loads in each region:
+load_region_1 = load_data_region_1_temp(:,4)*(1+load_growth);
+load_region_2 = load_data_region_2_temp(:,4)*(1+load_growth);
+load_region_3 = load_data_region_3_temp(:,4)*(1+load_growth);
+load_region_4 = load_data_region_4_temp(:,4)*(1+load_growth);
+load_region_5 = load_data_region_5_temp(:,4)*(1+load_growth);    
 
-load_region_1 = load_region_all(:,1);
-load_region_2 = load_region_all(:,2);
-load_region_3 = load_region_all(:,3);
-load_region_4 = load_region_all(:,4);
-load_region_5 = load_region_all(:,5);
+% Average LMPs in each region:
+p_region_1 = load_data_region_1_temp(:,3);
+p_region_2 = load_data_region_2_temp(:,3);
+p_region_3 = load_data_region_3_temp(:,3);
+p_region_4 = load_data_region_4_temp(:,3);
+p_region_5 = load_data_region_5_temp(:,3);    
 
 load_region_by_t_1 = load_region_1./delta;
 load_region_by_t_2 = load_region_2./delta;
@@ -878,6 +880,7 @@ H_params(1:length(x_int),1:length(x_int)) = H_params_int;
 %% Define Constraints:
 % Equality constraints:
 % Internal Units Market Clearing:
+%lost_component = (1+trans_loss_pct).*(1+2.5*abs(net_vb)).*(1+z);
 lost_component = 1+tot_loss_pct-net_vb;
 
 Aeq_d = -eye(I,I);
@@ -1108,173 +1111,38 @@ Aineq_ext_rec_final(:,1:size(Aineq_ext_rec,2)) = Aineq_ext_rec;
 
 if cap_exp == 0
     if rps_const == 0     
-        Aineq_no_CPP = []; 
-        bineq_no_CPP = [];
+        Aineq = []; 
+        bineq = [];
     elseif rps_const == 1
         A_ineq_rps_final = [A_ineq_rps_int,A_ineq_g_rps_ext_rec];
-        Aineq_no_CPP = zeros(size(Aineq_ext_rec,1)+size(A_ineq_rps_no_cap_ext,1),length(x));
-        Aineq_no_CPP(1:J_r,1:length(x)) = Aineq_ext_rec_final;     
-        Aineq_no_CPP(J_r+1:J_r+S*3,1:length(x)) = A_ineq_rps_final; 
+        Aineq = zeros(size(Aineq_ext_rec,1)+size(A_ineq_rps_no_cap_ext,1),length(x));
+        Aineq(1:J_r,1:length(x)) = Aineq_ext_rec_final;     
+        Aineq(J_r+1:J_r+S*3,1:length(x)) = A_ineq_rps_final; 
 
-        bineq_no_CPP = [bineq_ext_rec;bineq_rps];
+        bineq = [bineq_ext_rec;bineq_rps];
     end   
 elseif cap_exp == 1
     if rps_const == 0 
-        Aineq_no_CPP = zeros(size(A_ineq_gK,1),length(x));
-        Aineq_no_CPP(:,length(x_int)+1:length(x)) = A_ineq_gK; 
+        Aineq = zeros(size(A_ineq_gK,1),length(x));
+        Aineq(:,length(x_int)+1:length(x)) = A_ineq_gK; 
 
-        bineq_no_CPP = b_ineq_gK;
+        bineq = b_ineq_gK;
     elseif rps_const == 1
         A_ineq_rps_final = [A_ineq_rps_int,A_ineq_g_rps_ext_rec,A_ineq_rps_new_cap];
-        Aineq_no_CPP = zeros(size(Aineq_ext_rec,1)+size(A_ineq_rps_no_cap_ext,1)+size(A_ineq_gK,1),length(x));
-        Aineq_no_CPP(1:J_r,1:length(x)) = Aineq_ext_rec_final; 
-        Aineq_no_CPP(J_r+1:J_r+S*3,1:length(x)) = A_ineq_rps_final; 
-        Aineq_no_CPP(J_r+S*3+1:end,length(x_int)+length(x_ext_rec)+1:length(x)) = A_ineq_gK; 
+        Aineq = zeros(size(Aineq_ext_rec,1)+size(A_ineq_rps_no_cap_ext,1)+size(A_ineq_gK,1),length(x));
+        Aineq(1:J_r,1:length(x)) = Aineq_ext_rec_final; 
+        Aineq(J_r+1:J_r+S*3,1:length(x)) = A_ineq_rps_final; 
+        Aineq(J_r+S*3+1:end,length(x_int)+length(x_ext_rec)+1:length(x)) = A_ineq_gK; 
 
-        bineq_no_CPP = [bineq_ext_rec;bineq_rps;b_ineq_gK];
+        bineq = [bineq_ext_rec;bineq_rps;b_ineq_gK];
     end    
-end
-
-
-% Adding Mass-Based Contraints:
-if policy_sc==2
-      A_ineq_MB_d = zeros(2,I);
-      A_ineq_MB_f = zeros(2,F);
-      A_ineq_MB_g_1_t = [ones(1,region_1_no_plants+region_2_no_plants),zeros(1,region_3_no_plants+region_4_no_plants+region_5_no_plants)].*ei_region_t';
-      A_ineq_MB_g_2_t = [zeros(1,region_1_no_plants+region_2_no_plants),ones(1,region_3_no_plants+region_4_no_plants+region_5_no_plants)].*ei_region_t';
-      A_ineq_MB_g_1_temp = repmat(A_ineq_MB_g_1_t',1,T);
-      A_ineq_MB_g_2_temp = repmat(A_ineq_MB_g_2_t',1,T);
-
-      for t = 1:T
-          A_ineq_MB_g_1_temp_2(:,t) = A_ineq_MB_g_1_temp(:,t)*delta(t);
-          A_ineq_MB_g_2_temp_2(:,t) = A_ineq_MB_g_2_temp(:,t)*delta(t);
-      end
-
-      for t = 1:T
-          A_ineq_MB_1_t(:,t) = [A_ineq_MB_d(1,:)';A_ineq_MB_g_1_temp_2(:,t);A_ineq_MB_f(1,:)'];
-          A_ineq_MB_2_t(:,t) = [A_ineq_MB_d(1,:)';A_ineq_MB_g_2_temp_2(:,t);A_ineq_MB_f(1,:)'];
-      end
-
-      A_ineq_MB_1 = reshape(A_ineq_MB_1_t,length(A_ineq_MB_1_t)*T,1)';
-      A_ineq_MB_2 = reshape(A_ineq_MB_2_t,length(A_ineq_MB_2_t)*T,1)';
-
-      A_ineq_MB = zeros(2,length(x));
-      A_ineq_MB(:,1:length(x_int)) = [A_ineq_MB_1;A_ineq_MB_2];
-      b_ineq_MB = [e_PA;e_RPJM];
-elseif policy_sc==3
-      A_ineq_MB_d = zeros(1,I);
-      A_ineq_MB_f = zeros(1,F);
-      A_ineq_MB_g_t = [ones(1,region_1_no_plants+region_2_no_plants),ones(1,region_3_no_plants+region_4_no_plants+region_5_no_plants)].*ei_region_t';
-      A_ineq_MB_g_temp = repmat(A_ineq_MB_g_t',1,T);
-
-      for t = 1:T
-          A_ineq_MB_g_temp_2(:,t) = A_ineq_MB_g_temp(:,t).*delta(t);
-      end
-
-      for t = 1:T
-          A_ineq_MB_t(:,t) = [A_ineq_MB_d';A_ineq_MB_g_temp_2(:,t);A_ineq_MB_f'];
-      end
-
-      A_ineq_MB = zeros(1,length(x));
-      A_ineq_MB(1,1:length(x_int)) = reshape(A_ineq_MB_t,length(A_ineq_MB_t)*T,1)';
-      b_ineq_MB = e_PA+e_RPJM; 
-end
-
-if policy_sc==1
-      Aineq = Aineq_no_CPP;
-      bineq = bineq_no_CPP;
-elseif policy_sc==2 || policy_sc==3
-      Aineq = [Aineq_no_CPP;A_ineq_MB];
-      bineq = [bineq_no_CPP;b_ineq_MB];
 end
 
 
 %% Solve RTO problem
 % Initital starting values
-% x0 = ones(length(x),1);
 x0 = [];
 
+% options = cplexoptimset;
 options = cplexoptimset('Display','on','TolFun',0.0000001,'TolRLPFun',0.0000001,'MaxNodes',50000,'MaxIter',50000);
-
-tic
-[x_star,fval,exitflag,output,mu] = cplexqp(H_params,f_params,Aineq,bineq,Aeq,beq,lb,ub,x0,options); %#ok<ASGLU>
-toc;
-
-%% Unpack Solution:
-% Unpack internal units, demand and flows:
-x_star_int = x_star(1:length(x_int));
-x_star_reshape = reshape(x_star_int,[length(x_t),T]);
-d_star = x_star_reshape(1:length(d_t),:);
-g_1_star = x_star_reshape(1+length(d_t):length(d_t)+region_1_no_plants,:);
-g_2_star = x_star_reshape(1+length(d_t)+region_1_no_plants:length(d_t)+region_1_no_plants+region_2_no_plants,:);
-g_3_star = x_star_reshape(1+length(d_t)+region_1_no_plants+region_2_no_plants:length(d_t)+region_1_no_plants+region_2_no_plants+region_3_no_plants,:);
-g_4_star = x_star_reshape(1+length(d_t)+region_1_no_plants+region_2_no_plants+region_3_no_plants:length(d_t)+region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants,:);
-g_5_star = x_star_reshape(1+length(d_t)+region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants:length(d_t)+region_1_no_plants+region_2_no_plants+region_3_no_plants+region_4_no_plants+region_5_no_plants,:);
-f_star = x_star_reshape(1+length(d_t)+J:end,:);
-
-% Unpack RECs purchased from outside of PJM:
-if rps_const==1
-    x_star_ext_rec = x_star(length(x_int)+1:length(x_int)+J_r*S*3);
-    tier_1_g_ex = x_star_ext_rec(1:J_r*S);
-    tier_1_g_ex_reshape = reshape(tier_1_g_ex,[J_r,S]);
-    tier_2_g_ex = x_star_ext_rec(J_r*S+1:J_r*S*2);
-    tier_2_g_ex_reshape = reshape(tier_2_g_ex,[J_r,S]);
-    solar_g_ex = x_star_ext_rec(J_r*S*2+1:end);
-    solar_g_ex_reshape = reshape(solar_g_ex,[J_r,S]);
-    tot_tier_1_gen = sum(tier_1_g_ex_reshape);
-    tot_tier_2_gen = sum(tier_2_g_ex_reshape);
-    tot_solar_gen = sum(solar_g_ex_reshape);
-else
-    tot_tier_1_gen = zeros(1,S);
-    tot_tier_2_gen = zeros(1,S);
-    tot_solar_gen = zeros(1,S);
-end
-
-% Unpact new units and capacity:
-if cap_exp ==1 && rps_const == 0
-    x_star_cap_exp = x_star(length(x_int)+1:length(x));
-elseif cap_exp ==1 && rps_const == 1
-    x_star_cap_exp = x_star(length(x_int)+J_r*S*3+1:length(x));
-else
-    x_star_cap_exp = [zeros(S*3*T,1);zeros(S*3,1)];
-end
-
-g_n_t = x_star_cap_exp(1:S*3*T);
-g_n_star = reshape(g_n_t,[S*3 T]);
-K_n_t = x_star_cap_exp(S*3*T+1:end);
-K_n_star = reshape(K_n_t,[3 S])';
-for t = 1:T
-    g_n_star_2(:,t) = g_n_star(:,t)*delta(t);
-end
-
-% Unpact prices and permit prices:
-mu00 = mu.eqlin;
-mu_ineq00 = mu.ineqlin;
-
-mu_p_star = mu00(1:I*T);
-p_star0 = reshape(mu_p_star,[I,T]);
-for t = 1:T
-    p_star0(:,t) = -p_star0(:,t)/delta(t);
-end
-p_star = p_star0;
-
-if rps_const==0 
-    mu_REC_star = zeros(S*3,1);
-elseif rps_const == 1
-    mu_REC_star = mu_ineq00(J_r+1:J_r+S*3);
-end
-
-
-if dr==3
-    if policy_sc==1
-        save('2022_baseline_results.mat')
-    elseif policy_sc==2
-        save('2022_MB_NoTrade_results.mat')
-    elseif policy_sc==3
-        save('2022_MB_Trade_results.mat')
-    end
-end
-
-
-
-end
+[x_star,fval,exitflag,output,mu] = cplexqp(H_params,f_params,Aineq,bineq,Aeq,beq,lb,ub,x0,options);
