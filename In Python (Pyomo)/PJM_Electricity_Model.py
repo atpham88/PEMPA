@@ -4,6 +4,19 @@
 # With Cumulative Emission Cap
 # Finished coding on 04/25/2020 by An Pham
 
+# Region 1: PA East
+# Region 2: PA West
+# Region 3: RPJM East
+# Region 4: RPJM Central
+# Region 5: RPJM West
+
+# Available transmission lines:
+# PA West to PA East: 1-2
+# PA East to RPJM East: 1-3
+# PA East to RPJM Central: 1-4
+# PA West to RPJM West: 2-5
+# BDC to RPJM West: 4-5
+
 # To reset console:
 # from IPython import get_ipython
 # def __reset__(): get_ipython().magic('reset -sf')
@@ -13,6 +26,8 @@
 import pandas as pd
 import numpy as np
 from pyomo.environ import *
+from pyomo.opt import SolverFactory
+from math import *
 
 model = ConcreteModel(name="PJM_2021")
 
@@ -91,54 +106,6 @@ avail_N_s = np.repeat(avail_s , S)
 # Percentage of total ext REC supply available to use by state:
 rec_PA_g_sc = 0.615 * 1.4859
 rec_RPJM_g_sc = 0.814 * 1.08 * 1.0587
-
-# Adjusted variable operation and maintenance costs:
-vom_wind = 3.38
-vom_hydro = 3.5
-vom_solar = 5.4
-vom_nuclear = 4.28
-
-vom_bio_PA = 17.0
-vom_bio_RPJM = 3.5
-
-vom_gas_PA_winter = 22
-vom_gas_RPJM_winter = 14.5
-vom_gas_PA_spring = 7.3
-vom_gas_RPJM_spring = 5.2
-vom_gas_PA_summer = 14.8
-vom_gas_RPJM_summer = 12.2
-vom_gas_PA_fall = 16.3
-vom_gas_RPJM_fall = 13.8
-
-vom_oil_PA = 1.8
-vom_oil_RPJM = 0.2
-
-vom_coal_PA_winter = 1.25
-vom_coal_RPJM_winter = 1.25
-vom_coal_PA_spring = 1.25
-vom_coal_RPJM_spring = 1.25
-vom_coal_PA_summer = 1.25
-vom_coal_RPJM_summer = 1.25
-vom_coal_PA_fall = 1.25
-vom_coal_RPJM_fall = 1.25
-
-f_cs_bio = 1.25
-
-f_cs_coal_winter = 1.45
-f_cs_gas_winter = 0.83
-f_cs_oil_winter = 0.61
-
-f_cs_coal_spring = 1.45
-f_cs_gas_spring = 0.75
-f_cs_oil_spring = 0.8
-
-f_cs_coal_summer = 1.45
-f_cs_gas_summer = 0.83
-f_cs_oil_summer = 0.61
-
-f_cs_coal_fall = 1.45
-f_cs_gas_fall = 0.83
-f_cs_oil_fall = 0.61
 
 # Marginal cost:
 MC_N_PA_g = 21.1 * (1 + 0.1194)
@@ -431,19 +398,6 @@ emission_data_4 = supply_data[region_1_no_plants + region_2_no_plants + region_3
                                                    region_2_no_plants + region_3_no_plants + region_4_no_plants, 107]
 emission_data_5 = supply_data[region_1_no_plants + region_2_no_plants + region_3_no_plants + region_4_no_plants:, 107]
 
-# Region 1: PA East
-# Region 2: PA West
-# Region 3: RPJM East
-# Region 4: RPJM Central
-# Region 5: RPJM West
-
-# Available transmission lines:
-# PA West to PA East: 1-2
-# PA East to RPJM East: 1-3
-# PA East to BDC: 1-4
-# PA West to RPJM West: 2-5
-# BDC to RPJM West: 4-5
-
 rec_region_tolist = np.hstack((rec_region.tolist()))
 rec_g_sc_all = np.zeros(J_r)
 
@@ -452,13 +406,6 @@ for j in range(J_r):
         rec_g_sc_all[j] = rec_PA_g_sc
     else:
         rec_g_sc_all[j] = rec_RPJM_g_sc
-
-# Available transmission lines:
-# PA West to PA East: 1-2
-# PA East to RPJM East: 1-3
-# PA East to Central RPJM: 1-4
-# PA West to RPJM West: 2-5
-# Central RPJM to RPJM West: 4-5
 
 # Emissions intensity:
 ei_ratio_1 = ei_ratio[0:region_1_no_plants]
@@ -539,7 +486,7 @@ m_2 = 0 * b_2
 m_3 = 0 * b_3
 m_4 = 0 * b_4
 m_5 = 0 * b_5
-m = np.vstack((m_1, m_2, m_3, m_4,m_5))
+m = np.vstack((m_1, m_2, m_3, m_4, m_5))
 
 delta = hours_all
 
@@ -593,7 +540,8 @@ elif trans_const == 0:
 # ****************FINISH READING DATA****************************************
 
 # ****************MODEL BEGINS***********************************************
-# Define bounds:
+## Define bounds:
+# For existing units:
 cap_scaler_1 = np.ones(region_1_no_plants)
 cap_scaler_2 = np.ones(region_2_no_plants)
 cap_scaler_3 = np.ones(region_3_no_plants)
@@ -705,13 +653,35 @@ upper_b_gen_in = np.tile(np.vstack(np.multiply(cap_scaler, cap_region_t)), I)
 upper_b_gen_in_temp = np.multiply(upper_b_gen_in, units_in_region)
 upper_b_gen_in_all = np.dstack([upper_b_gen_in_temp]*T)
 
+# For external REC units:
+g_all_tot_stack = np.tile(np.vstack(g_all_tot),S)
+rec_g_sc_all_stack = np.tile(np.vstack(rec_g_sc_all),S)
+
+ub_new_g_tier1_temp = np.multiply(g_all_tot_stack, rec_g_sc_all_stack, unit_dummy_tier1)
+ub_new_g_tier2_temp = np.multiply(g_all_tot_stack, rec_g_sc_all_stack, unit_dummy_tier2)
+ub_new_g_solar_temp = np.multiply(g_all_tot_stack, rec_g_sc_all_stack, unit_dummy_solar)
+
+ub_new_g_tier1_temp[:, 3:5] = np.zeros((J_r, 2))
+ub_new_g_tier1_temp[:, 7] = np. zeros(J_r)
+ub_new_g_tier1_temp[:, 11:14] = np.zeros((J_r,3))
+ub_new_g_tier2_temp[:, 3:5] = np.zeros((J_r, 2))
+ub_new_g_tier2_temp[:, 7] = np. zeros(J_r)
+ub_new_g_tier2_temp[:, 11:14] = np.zeros((J_r,3))
+ub_new_g_solar_temp[:, 3:5] = np.zeros((J_r, 2))
+ub_new_g_solar_temp[:, 7] = np. zeros(J_r)
+ub_new_g_solar_temp[:, 11:14] = np.zeros((J_r,3))
+
+ub_g_rec_tier1 = ub_new_g_tier1_temp
+ub_g_rec_tier2 = ub_new_g_tier2_temp
+ub_g_rec_solar = ub_new_g_solar_temp
+
 # Define sets:
-model.D = RangeSet(I)
-model.G_in = RangeSet(J)
-model.Fl = RangeSet(F)
-model.S = RangeSet(S)
-model.Ex_rec = RangeSet(J_r*S*3)
-model.T = RangeSet(T)
+model.D = Set(initialize=[1,2,3,4,5])
+model.G_in = Set(initialize=list(range(1, J+1)))
+model.Fl = Set(initialize=[1,2,3,4,5])
+model.S = Set(initialize=list(range(1, S+1)))
+model.Ex_rec = Set(initialize=list(range(1, J_r+1)))
+model.T = Set(initialize=list(range(1, T+1)))
 
 # Define variables:
 model.d = Var(model.D, model.T, within=NonNegativeReals)
@@ -723,17 +693,25 @@ model.k_s = Var(model.S, within=NonNegativeReals)
 model.gen_ex_g = Var(model.S, model.T, within=NonNegativeReals)
 model.gen_ex_w = Var(model.S, model.T, within=NonNegativeReals)
 model.gen_ex_s = Var(model.S, model.T, within=NonNegativeReals)
-model.ex_rec = Var(model.Ex_rec, within=NonNegativeReals) # still need to fix this
+model.ex_rec_tier1 = Var(model.Ex_rec, model.S, bounds=(np.zeros((J_r,S)), ub_g_rec_tier1))
+model.ex_rec_tier2 = Var(model.Ex_rec, model.S, bounds=(np.zeros((J_r,S)), ub_g_rec_tier2))
+model.ex_rec_solar = Var(model.Ex_rec, model.S, bounds=(np.zeros((J_r,S)), ub_g_rec_solar))
 
-f_matrix = np.array([[1, 1, 1, 0, 0], [-1, 0, 0, 1, 0], [0, -1, 0, 0, 0], [0, 0, -1, 0, 1], [0, 0, 0, -1, -1]])
-
+# Define parameters:
+model.f_param = Param(model.D, model.Fl, initialize=[[1, 1, 1, 0, 0], [-1, 0, 0, 1, 0], [0, -1, 0, 0, 0],
+                                                       [0, 0, -1, 0, 1], [0, 0, 0, -1, -1]])
+model.state_region = Param(model.D, model.S, initialize=[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.586434045, 0, 0, 0],
+                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.413565955, 0, 0, 0],
+                              [0, 1, 0, 0, 0, 0, 0, 0, 0.228034644, 0, 0, 0, 0, 0],
+                              [1, 0, 0, 0, 0, 0.912229612, 0, 1, 0, 0, 0, 0, 0.800495305, 0.004136931],
+                              [0, 0, 1, 1, 1, 0.087770388, 1, 0, 0.771965356, 1, 0, 1, 0.199504695, 0.995863069]])
 
 # Constraints:
 # external generation constraints:
 def gen_ex_constraint_1(model, k_1, t):
     for k_1 in model.S:
         for t in model.T:
-            return model.gen_ex_g[k_1, t] <= model.k[k_1]*avail_N_g[k_1]
+            return model.gen_ex_g[k_1, t] <= model.k_g[k_1]*avail_N_g[k_1]
 
 
 model.gen_ex_cstr_1 = Constraint(model.S, model.T, rule=gen_ex_constraint_1)
@@ -741,7 +719,7 @@ model.gen_ex_cstr_1 = Constraint(model.S, model.T, rule=gen_ex_constraint_1)
 def gen_ex_constraint_2(model, k_2, t):
     for k_2 in model.S:
         for t in model.T:
-            return model.gen_ex_w[k_2, t] <= model.k[k_2]*avail_N_w[k_2]
+            return model.gen_ex_w[k_2, t] <= model.k_w[k_2]*avail_N_w[k_2]
 
 
 model.gen_ex_cstr_2 = Constraint(model.S, model.T, rule=gen_ex_constraint_2)
@@ -749,7 +727,7 @@ model.gen_ex_cstr_2 = Constraint(model.S, model.T, rule=gen_ex_constraint_2)
 def gen_ex_constraint_3(model, k_3, t):
     for k_3 in model.S:
         for t in model.T:
-            return model.gen_ex_s[k_3, t] <= model.k[k_3]*avail_N_w[k_3]
+            return model.gen_ex_s[k_3, t] <= model.k_s[k_3]*avail_N_w[k_3]
 
 
 model.gen_ex_cstr_3 = Constraint(model.S, model.T, rule=gen_ex_constraint_3)
@@ -760,7 +738,9 @@ def market_clearing(model, i, t):
     for i in model.D:
         for t in model.T:
             return sum(model.gen_in[g, i, t] for g in model.G_in) \
-                  + sum(model.gen_ex[k, t] for k in model.K) \
+                  + sum(model.gen_ex_g[s, t] for s in model.S) \
+                  + sum(model.gen_ex_w[s, t] for s in model.S) \
+                  + sum(model.gen_ex_s[s, t] for s in model.S) \
                   + sum(model.fl[f, t] for f in model.Fl) \
                   == model.d[i, t]*lost_component[t]
 
@@ -774,12 +754,44 @@ model.market_clearing_cstr = Constraint(model.D, model.T, rule=market_clearing)
 #                   == model.d[i, t]*lost_component[t]
 
 # RPS constraints:
+# Tier 1:
 def rps_constraint_1(model,s_1):
     for s_1 in model.S:
-        return (re_tier_1[s_1]-1)*sum(rps_tier_1_ratio[g] for g in model.G_in) \
-               + re_tier_1[s_1]*sum(rps_tier_1_ratio[g] for g in model.G_in) <= 0
+        return (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
+               + sum(model.gen_ex_w[s_1, t] for t in model.T) \
+               + sum(model.gen_ex_s[s_1, t] for t in model.T) \
+               + sum(model.ex_rec_tier1[jr, s_1] for jr in model.Ex_rec)) \
+               / (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
+               + sum(model.gen_ex_g[s_1, t] for t in model.T) \
+               + sum(model.gen_ex_w[s_1, t] for t in model.T) \
+               + sum(model.gen_ex_s[s_1, t] for t in model.T)) >= re_tier_1(s_1)
 
 model.rps_constraint_1 = Constraint(model.S, rule=rps_constraint_1)
+
+# Tier 2:
+def rps_constraint_2(model,s_2):
+    for s_2 in model.S:
+        return (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
+               + sum(model.ex_rec_tier1[jr, s_2] for jr in model.Ex_rec)) \
+               / (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
+               + sum(model.gen_ex_g[s_2, t] for t in model.T) \
+               + sum(model.gen_ex_w[s_2, t] for t in model.T) \
+               + sum(model.gen_ex_s[s_2, t] for t in model.T)) >= re_tier_2(s_2)
+
+model.rps_constraint_2 = Constraint(model.S, rule=rps_constraint_2)
+
+# SREC:
+def rps_constraint_3(model,s_3):
+    for s_3 in model.S:
+        return (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
+               + sum(model.ex_rec_tier1[jr, s_3] for jr in model.Ex_rec)) \
+               / (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
+               + sum(model.gen_ex_g[s_3, t] for t in model.T) \
+               + sum(model.gen_ex_w[s_3, t] for t in model.T) \
+               + sum(model.gen_ex_s[s_3, t] for t in model.T)) >= se(s_3)
+
+model.rps_constraint_3 = Constraint(model.S, rule=rps_constraint_3)
+
 
 # Objective function:
 def objective_func(model):
