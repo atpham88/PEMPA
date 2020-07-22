@@ -33,9 +33,10 @@ model = ConcreteModel(name="PJM_2021")
 
 # Switches:
 # **********************************************
-trans_const = 1  # Whether or not there's existence of transmission constraint (==1:yes, ==0:no)
-rps_const = 1    # Whether or not there's existence of RPS (==1:yes, ==0:no)
-cap_exp = 1      # Whether or not there's capacity expansion (==1:yes, ==0:no)
+trans_const = 1     # Whether or not there's existence of transmission constraint (==1:yes, ==0:no)
+rps_const = 1       # Whether or not there's existence of RPS (==1:yes, ==0:no)
+cap_exp = 1         # Whether or not there's capacity expansion (==1:yes, ==0:no)
+run_on_cluster = 1  # ==1: Running on supercomputer system, ==0: Running on personal laptop
 
 # **********************************************
 # Define Parameters and variables:
@@ -62,7 +63,11 @@ for s in range(S):
     state_to_region[:, count: count+3] = np.tile(np.vstack(state_to_region_t[:, s]), (1, 3))
     count = count+3
 
-gas_gr_data_2021 = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Gas price growth rates/gas_gr_2021.xlsx'
+if run_on_cluster == 0:
+    gas_gr_data_2021 = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Gas price growth rates/gas_gr_2021.xlsx'
+elif run_on_cluster == 1:
+    gas_gr_data_2021 = '/storage/work/a/akp5369/Model_in_Python/Input Data/Gas price growth rates/gas_gr_2021.xlsx'
+
 
 # 2021:
 load_growth = 0
@@ -267,10 +272,25 @@ x_gen_solar = np.hstack((x_gen_solar_DC, x_gen_solar_DE, x_gen_solar_IL, x_gen_s
 
 x_gen = np.hstack((x_gen_tot, x_gen_tier1, x_gen_tier2, x_gen_solar))
 
-# Read Data:
-# Read Demand Data:
-demand_curve = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Demand Data/Demand Curves_96_2021.xlsx'
+# Read All Data:
+if run_on_cluster == 0:
+    demand_curve = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Demand Data/Demand Curves_96_2021.xlsx'
+    transmission_network = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Transmission/Transmission Networks.xlsx'
+    virtual_bid = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Virtual Bids/results_no_trans_const3.xlsx'
+    trans_factor = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Transmission/trans_scaler.xlsx'
+    supply_curve = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Supply Data/Supply_Curve_96_final_2021.xlsx'
+    REC_units = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/External RECs/REC_units_clear2.xlsx'
 
+elif run_on_cluster == 1:
+    demand_curve = '/storage/work/a/akp5369/Model_in_Python/Input Data/Demand Data/Demand Curves_96_2021.xlsx'
+    transmission_network = '/storage/work/a/akp5369/Model_in_Python/Input Data/Transmission/Transmission Networks.xlsx'
+    virtual_bid = '/storage/work/a/akp5369/Model_in_Python/Input Data/Virtual Bids/results_no_trans_const3.xlsx'
+    trans_factor = '/storage/work/a/akp5369/Model_in_Python/Input Data/Transmission/trans_scaler.xlsx'
+    supply_curve = '/storage/work/a/akp5369/Model_in_Python/Input Data/Supply Data/Supply_Curve_96_final_2021.xlsx'
+    REC_units = '/storage/work/a/akp5369/Model_in_Python/Input Data/External RECs/REC_units_clear2.xlsx'
+
+
+# Read Demand Data:
 load_data_region_1_temp = pd.read_excel(demand_curve, 'region 1').values
 load_data_region_2_temp = pd.read_excel(demand_curve, 'region 2').values
 load_data_region_3_temp = pd.read_excel(demand_curve, 'region 3').values
@@ -280,20 +300,15 @@ load_data_region_5_temp = pd.read_excel(demand_curve, 'region 5').values
 hours = pd.read_excel(demand_curve, 'hours').values
 
 # Read Transmission Network Data:
-transmission_network = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Transmission/Transmission Networks.xlsx'
 transmission_data = pd.read_excel(transmission_network, 'Transmission Network').values
 
 # Virtual Bid:
-virtual_bid = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Virtual Bids/results_no_trans_const3.xlsx'
 zdata = pd.read_excel(virtual_bid, 'beta').values
 
 # Transmission Factor:
-trans_factor = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Transmission/trans_scaler.xlsx'
 trans_factor_data = pd.read_excel(trans_factor, 'Sheet1').values
 
 # Read Supplier Data:
-supply_curve = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/Supply Data/Supply_Curve_96_final_2021.xlsx'
-
 supply_data = pd.read_excel(supply_curve, 'bin 1').values
 
 state = np.hstack(supply_data[:, 111])
@@ -358,7 +373,6 @@ cap_region_5 = np.hstack(supply_data_5[:, 2])
 cap_region_t = np.hstack((cap_region_1, cap_region_2, cap_region_3, cap_region_4, cap_region_5))
 
 # REC units:
-REC_units = 'C:/Users/atpha/Documents/Research/PJM Model/Input Data/External RECs/REC_units_clear2.xlsx'
 tier1_units_data = pd.read_excel(REC_units, 'tier 1').values
 tier2_units_data = pd.read_excel(REC_units, 'tier 2').values
 solar_units_data = pd.read_excel(REC_units, 'solar').values
