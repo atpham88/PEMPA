@@ -309,7 +309,6 @@ no_trans = zeros(1,96);
 trans_factor = [trans_factor_data(1,:);trans_factor_data(2,:);trans_factor_data(3,:);no_trans;no_trans;no_trans;trans_factor_data(4,:);no_trans;no_trans;trans_factor_data(5,:)];
 
 % Read emission intensity data:
-% Read emission intensity data:
 emission_data_1 = supply_data(1:region_1_no_plants,108);
 emission_data_2 = supply_data(region_1_no_plants+1:region_1_no_plants+region_2_no_plants,108);
 emission_data_3 = supply_data(region_1_no_plants+region_2_no_plants+1:region_1_no_plants+region_2_no_plants+region_3_no_plants,108);
@@ -346,25 +345,6 @@ fuel_region_3 = supply_data_3(:,1);
 fuel_region_4 = supply_data_4(:,1);
 fuel_region_5 = supply_data_5(:,1);
 fuel_region_t = [fuel_region_1;fuel_region_2;fuel_region_3;fuel_region_4;fuel_region_5];
-
-% Capacity Scaler:
-cs_coal_PA = 0.997082931*1.004;
-cs_hydro_PA = 0.986734678;
-cs_gas_PA = 0.834969638;
-cs_nuclear_PA = 0.908225067;
-cs_oil_PA = 0.921889581;
-cs_wind_PA = 0.884053657;
-cs_bio_PA = 0.870537542;
-cs_solar_PA = 0.935752345;
-
-cs_coal_RPJM = 1.212691835*1.004;
-cs_hydro_RPJM = 0.967782977;
-cs_gas_RPJM = 0.989663052;
-cs_nuclear_RPJM = 1.216346754;
-cs_oil_RPJM = 0.982988775;
-cs_wind_RPJM = 1.586726142;
-cs_bio_RPJM = 0.890537542;
-cs_solar_RPJM = 0.333057297;
 
 % Capacity Factors:
 cf_hydro_PA = 0.108869594+cf_gr_hydro;
@@ -544,128 +524,6 @@ cap_scaler_2 = ones(region_2_no_plants,T);
 cap_scaler_3 = ones(region_3_no_plants,T);
 cap_scaler_4 = ones(region_4_no_plants,T);
 cap_scaler_5 = ones(region_5_no_plants,T);
-for t = 1:T
-    for fr = 1:region_1_no_plants
-        for ju = 1:region_1_no_plants            
-            if fuel_region_1(ju)==1 && supply_data_1(ju,111)<2000
-                cap_scaler_1(ju,t) = cs_bio_PA*0.961;
-            elseif fuel_region_1(ju)==2 && supply_data_1(ju,111)<2000
-                cap_scaler_1(ju,t) = cs_coal_PA*0.961;               
-            elseif fuel_region_1(ju)==3 && supply_data_1(ju,111)<2000
-                cap_scaler_1(ju,t) = cs_hydro_PA*cf_hydro_PA;
-            elseif fuel_region_1(ju)==4 && supply_data_1(ju,111)<2000
-                cap_scaler_1(ju,t) = cs_nuclear_PA*cf_nuclear_PA;
-            elseif fuel_region_1(ju)==5 && supply_data_1(ju,111)<2000
-                cap_scaler_1(ju,t) = 0.961;
-            elseif fuel_region_1(ju)==6 && supply_data_1(ju,111)<2000
-                cap_scaler_1(ju,t) = cs_oil_PA*0.961;
-            elseif fuel_region_1(ju)==7 && supply_data_1(ju,111)<2000
-                cap_scaler_1(ju,t) = cs_solar_PA*cf_solar_PA;
-            elseif fuel_region_1(ju)==8 && supply_data_1(ju,111)<2000
-                cap_scaler_1(ju,t) = cs_wind_PA*cf_wind_PA;
-            elseif fuel_region_1(ju)==9 && supply_data_1(ju,111)<2000
-                cap_scaler_1(ju,t) = cs_gas_PA*0.961;
-            end  
-        end
-    end  
- 
-    for fr = 1:region_2_no_plants
-        for ju = 1:region_2_no_plants
-            if fuel_region_2(ju)==1 && supply_data_2(ju,111)<2000
-                cap_scaler_2(ju,t) = cs_bio_PA*0.961;
-            elseif fuel_region_2(ju)==2 && supply_data_2(ju,111)<2000
-                cap_scaler_2(ju,t) = cs_coal_PA*0.961;               
-            elseif fuel_region_2(ju)==3 && supply_data_2(ju,111)<2000
-                cap_scaler_2(ju,t) = cs_hydro_PA*cf_hydro_PA;
-            elseif fuel_region_2(ju)==4 && supply_data_2(ju,111)<2000
-                cap_scaler_2(ju,t) = cs_nuclear_PA*cf_nuclear_PA;
-            elseif fuel_region_2(ju)==5 && supply_data_2(ju,111)<2000
-                cap_scaler_2(ju,t) = 0.961;
-            elseif fuel_region_2(ju)==6 && supply_data_2(ju,111)<2000
-                cap_scaler_2(ju,t) = cs_oil_PA*0.961;
-            elseif fuel_region_2(ju)==7 && supply_data_2(ju,111)<2000
-                cap_scaler_2(ju,t) = cs_solar_PA*cf_solar_PA;
-            elseif fuel_region_2(ju)==8 && supply_data_2(ju,111)<2000
-                cap_scaler_2(ju,t) = cs_wind_PA*cf_wind_PA;
-            elseif fuel_region_2(ju)==9 && supply_data_2(ju,111)<2000
-                cap_scaler_2(ju,t) = cs_gas_PA*0.961;
-            end  
-        end
-    end 
-    
-    for fr = 1:region_3_no_plants
-        for ju = 1:region_3_no_plants
-            if fuel_region_3(ju)==1 && supply_data_3(ju,111)<2000
-                cap_scaler_3(ju,t) = cs_bio_RPJM*0.961;
-            elseif fuel_region_3(ju)==2 && supply_data_3(ju,111)<2000
-                cap_scaler_3(ju,t) = cs_coal_RPJM*0.961;               
-            elseif fuel_region_3(ju)==3 && supply_data_3(ju,111)<2000
-                cap_scaler_3(ju,t) = cs_hydro_RPJM*cf_hydro_RPJM;
-            elseif fuel_region_3(ju)==4 && supply_data_3(ju,111)<2000 
-                cap_scaler_3(ju,t) = cs_nuclear_RPJM*cf_nuclear_RPJM;
-            elseif fuel_region_3(ju)==5 && supply_data_3(ju,111)<2000
-                cap_scaler_3(ju,t) = 0.961;
-            elseif fuel_region_3(ju)==6 && supply_data_3(ju,111)<2000
-                cap_scaler_3(ju,t) = cs_oil_RPJM*0.961;
-            elseif fuel_region_3(ju)==7 && supply_data_3(ju,111)<2000
-                cap_scaler_3(ju,t) = cs_solar_RPJM*cf_solar_RPJM;
-            elseif fuel_region_3(ju)==8 && supply_data_3(ju,111)<2000
-                cap_scaler_3(ju,t) = cs_wind_RPJM*cf_wind_RPJM;
-            elseif fuel_region_3(ju)==9 && supply_data_3(ju,111)<2000
-                cap_scaler_3(ju,t) = cs_gas_RPJM*0.961;
-            end  
-        end
-    end     
-    
-    for fr = 1:region_4_no_plants
-        for ju = 1:region_4_no_plants
-            if fuel_region_4(ju)==1 && supply_data_4(ju,111)<2000
-                cap_scaler_4(ju,t) = cs_bio_RPJM*0.961;
-            elseif fuel_region_4(ju)==2 && supply_data_4(ju,111)<2000
-                cap_scaler_4(ju,t) = cs_coal_RPJM*0.961;               
-            elseif fuel_region_4(ju)==3 && supply_data_4(ju,111)<2000
-                cap_scaler_4(ju,t) = cs_hydro_RPJM*cf_hydro_RPJM;
-            elseif fuel_region_4(ju)==4 && supply_data_4(ju,111)<2000
-                cap_scaler_4(ju,t) = cs_nuclear_RPJM*cf_nuclear_RPJM;
-            elseif fuel_region_4(ju)==5 && supply_data_4(ju,111)<2000
-                cap_scaler_4(ju,t) = 0.961;
-            elseif fuel_region_4(ju)==6 && supply_data_4(ju,111)<2000
-                cap_scaler_4(ju,t) = cs_oil_RPJM*0.961;
-            elseif fuel_region_4(ju)==7 && supply_data_4(ju,111)<2000
-                cap_scaler_4(ju,t) = cs_solar_RPJM*cf_solar_RPJM;
-            elseif fuel_region_4(ju)==8 && supply_data_4(ju,111)<2000
-                cap_scaler_4(ju,t) = cs_wind_RPJM*cf_wind_RPJM;
-            elseif fuel_region_4(ju)==9 && supply_data_4(ju,111)<2000
-                cap_scaler_4(ju,t) = cs_gas_RPJM*0.961;
-            end  
-        end
-    end 
-    
-    for fr = 1:region_5_no_plants
-        for ju = 1:region_5_no_plants
-            if fuel_region_5(ju)==1 && supply_data_5(ju,111)<2000
-                cap_scaler_5(ju,t) = cs_bio_RPJM*0.961;
-            elseif fuel_region_5(ju)==2 && supply_data_5(ju,111)<2000
-                cap_scaler_5(ju,t) = cs_coal_RPJM*0.961;               
-            elseif fuel_region_5(ju)==3 && supply_data_5(ju,111)<2000
-                cap_scaler_5(ju,t) = cs_hydro_RPJM*cf_hydro_RPJM;
-            elseif fuel_region_5(ju)==4 && supply_data_5(ju,111)<2000
-                cap_scaler_5(ju,t) = cs_nuclear_RPJM*cf_nuclear_RPJM;
-            elseif fuel_region_5(ju)==5 && supply_data_5(ju,111)<2000
-                cap_scaler_5(ju,t) = 0.961;
-            elseif fuel_region_5(ju)==6 && supply_data_5(ju,111)<2000
-                cap_scaler_5(ju,t) = cs_oil_RPJM*0.961;
-            elseif fuel_region_5(ju)==7 && supply_data_5(ju,111)<2000
-                cap_scaler_5(ju,t) = cs_solar_RPJM*cf_solar_RPJM;
-            elseif fuel_region_5(ju)==8 && supply_data_5(ju,111)<2000
-                cap_scaler_5(ju,t) = cs_wind_RPJM*cf_wind_RPJM;
-            elseif fuel_region_5(ju)==9 && supply_data_5(ju,111)<2000
-                cap_scaler_5(ju,t) = cs_gas_RPJM*0.961;
-            end  
-        end
-    end           
-end    
-cap_scaler = [cap_scaler_1;cap_scaler_2;cap_scaler_3;cap_scaler_4;cap_scaler_5];
 
 ub_g_t = ones(J,T);
 for t = 1:T
@@ -880,7 +738,6 @@ H_params(1:length(x_int),1:length(x_int)) = H_params_int;
 %% Define Constraints:
 % Equality constraints:
 % Internal Units Market Clearing:
-%lost_component = (1+trans_loss_pct).*(1+2.5*abs(net_vb)).*(1+z);
 lost_component = 1+tot_loss_pct-net_vb;
 
 Aeq_d = -eye(I,I);
