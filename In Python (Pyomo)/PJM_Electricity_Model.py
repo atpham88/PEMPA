@@ -347,6 +347,7 @@ state_3 = state[region_1_no_plants + region_2_no_plants:region_1_no_plants + reg
 state_4 = state[region_1_no_plants + region_2_no_plants + region_3_no_plants:region_1_no_plants + region_2_no_plants +
                                                                              region_3_no_plants + region_4_no_plants]
 state_5 = state[region_1_no_plants + region_2_no_plants + region_3_no_plants + region_4_no_plants:]
+state_t = np.hstack((state_1, state_2, state_3, state_4, state_5))
 
 # Gas price growth rate:
 gas_gr_1 = gas_gr[0:region_1_no_plants, :]
@@ -770,46 +771,47 @@ model.market_clearing_cstr = Constraint(model.D, model.T, rule=market_clearing)
 # RPS constraints:
 # Tier 1:
 def rps_constraint_1(model,s_1):
-    for s_1 in model.S:
-        return (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
-               + sum(model.gen_ex_w[s_1, t] for t in model.T) \
-               + sum(model.gen_ex_s[s_1, t] for t in model.T) \
-               + sum(model.ex_rec_tier1[jr, s_1] for jr in model.Ex_rec)) \
-               / (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
-               + sum(model.gen_ex_g[s_1, t] for t in model.T) \
-               + sum(model.gen_ex_w[s_1, t] for t in model.T) \
-               + sum(model.gen_ex_s[s_1, t] for t in model.T)) >= re_tier_1(s_1)
+    for g in model.G_in:
+        for s_1 in model.S:
+            if state_t[g]==s_1:
+                return (sum(model.gen_in[g, i, t] for i in model.D for t in model.T) \
+                       + sum(model.gen_ex_w[s_1, t]*(1-re_tier_1[s_1]) for t in model.T) \
+                       + sum(model.gen_ex_s[s_1, t]*(1-re_tier_1[s_1]) for t in model.T) \
+                       + sum(model.gen_ex_g[s_1, t]*(-re_tier_1[s_1]) for t in model.T) \
+                       + sum(model.ex_rec_tier1[jr, s_1] for jr in model.Ex_rec))  >= 0
 
 model.rps_constraint_1 = Constraint(model.S, rule=rps_constraint_1)
 
 # Tier 2:
 def rps_constraint_2(model,s_2):
-    for s_2 in model.S:
-        return (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
-               + sum(model.ex_rec_tier1[jr, s_2] for jr in model.Ex_rec)) \
-               / (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
-               + sum(model.gen_ex_g[s_2, t] for t in model.T) \
-               + sum(model.gen_ex_w[s_2, t] for t in model.T) \
-               + sum(model.gen_ex_s[s_2, t] for t in model.T)) >= re_tier_2(s_2)
+    for g in model.G_in:
+        for s_2 in model.S:
+            if state_t[g]==s_2:
+                 return (sum(model.gen_in[g, i, t] for i in model.D for t in model.T) \
+                        + sum(model.ex_rec_tier1[jr, s_2] for jr in model.Ex_rec) \
+                        + sum(model.gen_ex_g[s_2, t]*(-re_tier_2[s_2]) for t in model.T) \
+                        + sum(model.gen_ex_w[s_2, t]*(-re_tier_2[s_2]) for t in model.T)
+                        + sum(model.gen_ex_s[s_2, t]*(-re_tier_2[s_2]) for t in model.T)) >= 0
 
 model.rps_constraint_2 = Constraint(model.S, rule=rps_constraint_2)
 
 # SREC:
 def rps_constraint_3(model,s_3):
-    for s_3 in model.S:
-        return (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
-               + sum(model.ex_rec_tier1[jr, s_3] for jr in model.Ex_rec)) \
-               / (sum(model.gen_in[g, i, t] for g in model.G_in for t in model.T) \
-               + sum(model.gen_ex_g[s_3, t] for t in model.T) \
-               + sum(model.gen_ex_w[s_3, t] for t in model.T) \
-               + sum(model.gen_ex_s[s_3, t] for t in model.T)) >= se(s_3)
+    for g in model.G_in:
+        for s_3 in model.S:
+            if state_t[g] == s_3:
+                return (sum(model.gen_in[g, i, t] for i in model.D for t in model.T) \
+                       + sum(model.ex_rec_tier1[jr, s_3] for jr in model.Ex_rec) \
+                       + sum(model.gen_ex_g[s_3, t]*(-se[s_3]) for t in model.T) \
+                       + sum(model.gen_ex_w[s_3, t]*(-se[s_3]) for t in model.T) \
+                       + sum(model.gen_ex_s[s_3, t]*(1-se[s_3]) for t in model.T)) >= 0
 
 model.rps_constraint_3 = Constraint(model.S, rule=rps_constraint_3)
 
 
 # Objective function:
 def objective_func(model):
-    return -(sum((-0.5*n[i, t]*model.d[i, t]**2 + c[i, t]*model.d[i, t])*delta[t] for i in model.I for t in model.T) \
+    return -(sum((-0.5*n[i, t]*model.d[i, t]**2 + c[i, t]*model.d[i, t])*delta[t] for i in model.D for t in model.T) \
            + sum(0.5*m[j]*model.gen_in[j, i, t]**2 + b[j]*model.gen_in[j, i, t] for j in model.G_in
                  for i in model.D for t in model.T)\
            - sum(C_N_g[s]*model.k_g[s] + C_N_w[s]*model.k_w[s] + C_N_s[s]*model.k_s[s] for s in model.S) \
