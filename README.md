@@ -29,4 +29,4 @@ REC prices (tier 1, tier 2 and SREC prices) for 14 states for years 2017-2030.
 Aggregate surpluses (including consumer surpluses, producer surpluses, total cost of permits bought and total value of permits sold) for 5 zones (can be broken down to 14 states) for years 2017-2030.
 
 # Example
-Example data for year 2021 provided in \input folder. 
+Example data for year 2017 provided in \input folder. 
