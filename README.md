@@ -9,9 +9,9 @@ Model considers 96 load segments  for each load zone  (24 per season), to captur
 
 Model is validated using 2018 data across several dimensions: generation mix, CO2 emission by zones, predicted new capacity, and zonal LMPs.
 
-Model includes many pre-existing policies: Clean Air Act (NOx and SO2 permits), state Rewnewable Portfolio Standard (RPS), RGGI, and state nuclear subsidies. Also allows for importation of external RECs (share numerically calibrated to match observed REC prices) from outside of PJM.
+Model includes many pre-existing policies: Clean Air Act (NOx and SO2 permits), state Rewnewable Portfolio Standard (RPS), RGGI, and state nuclear subsidies. Also allows for importation of external RECs from outside of PJM.
 
-<img src="https://user-images.githubusercontent.com/56058936/92846050-a456bf00-f3b5-11ea-9025-6898a131767b.png" width="800">
+<img src="https://user-images.githubusercontent.com/56058936/96286218-0b1b5980-0fae-11eb-9733-75cc2e271219.png" width="800">
 
 # Model Outputs
 Generation by aggregate units for 96 load segments for years 2017-2030.
