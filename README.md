@@ -11,7 +11,7 @@ Model is validated using 2018 data across several dimensions: generation mix, CO
 
 Model includes many pre-existing policies: Clean Air Act (NOx and SO2 permits), state Rewnewable Portfolio Standard (RPS), RGGI, and state nuclear subsidies. Also allows for importation of external RECs from outside of PJM.
 
-<img src="https://user-images.githubusercontent.com/56058936/96286218-0b1b5980-0fae-11eb-9733-75cc2e271219.png" width="800">
+<img src="https://user-images.githubusercontent.com/56058936/100789477-801ee300-33e4-11eb-8a79-854d6b52a522.png" width="900">
 
 # Model Outputs
 Generation by aggregate units for 96 load segments for years 2017-2030.
