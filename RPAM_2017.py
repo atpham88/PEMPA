@@ -1,5 +1,5 @@
-# PJM Electricity Model for 5 nodes
-# Language: Python
+# PJM+RGGI Multi-market simulation Model for 5 nodes
+# Language: Python/Pyomo
 # 2017 Calibration
 # Pre-existing policies: Clean Air Act Title IV, Nuclear Subsidies, RPS, RGGI
 # Finished coding on 04/25/2020 by An Pham
