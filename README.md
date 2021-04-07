@@ -1,17 +1,17 @@
 # Model Overview
 A multi-market numerical simulation model that combines:
 
-1.An aggregate model of electricity dispatch in the PJM footprint with virtual bidding.
+1. An aggregate model of electricity dispatch in the PJM footprint with virtual bidding.
 
-2.The endogenous supply of new generation capacity within PJM.
+2. The endogenous supply of new generation capacity within PJM.
 
-3.Pre-existing policies affecting the PJM power system.
+3. Pre-existing policies affecting the PJM power system.
 
-4.The importation of alternative/renewable energy credits (RECs) from outside of PJM.
+4. The importation of alternative/renewable energy credits (RECs) from outside of PJM.
 
-5.The supply of CO2 abatement from non-PJM RGGI member states.
+5. The supply of CO2 abatement from non-PJM RGGI member states.
 
-6.The supply/demand of banked CO2 allowances from current RGGI market participants.
+6. The supply/demand of banked CO2 allowances from current RGGI market participants.
 
 
 Designed to explore state/regional/federal policy interactions within large-scale PJM wholesale electricity market annually from 2016 to 2030. 
