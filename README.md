@@ -43,7 +43,4 @@ LMPs in 5 zones for 96 load segments for years 2017-2030.
 
 REC prices (tier 1, tier 2 and SREC prices) for 14 states for years 2017-2030.
 
-Economic benefits/losses (consumer surpluses, producer surpluses, total cost of allowances bought and total value of allowances sold) for 5 zones (can be broken down to 14 states) for years 2017-2030.
-
-# Example
-Example data for year 2017 provided in \input folder. 
+Annual economic benefits/losses (consumer surpluses, producer surpluses, total cost of allowances bought and total value of allowances sold) for 5 zones (can be broken down to 14 states) for years 2017-2030.
