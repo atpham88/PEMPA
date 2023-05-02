@@ -26,6 +26,8 @@ Model is calibrated using 2016 and 2017 data and validated using 2018 data acros
 
 Model includes many pre-existing policies: Clean Air Act (NOx and SO2 allowances), state Rewnewable Portfolio Standard (RPS), RGGI, and state nuclear subsidies. Also allows for importation of external RECs from outside of PJM.
 
+Model runs on an annual basis.
+
 <img src="https://user-images.githubusercontent.com/56058936/100789477-801ee300-33e4-11eb-8a79-854d6b52a522.png" width="900">
 
 # Model Outputs
